@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# hotspot-login-manager
+# https://github.com/syam44/Hotspot-Login-Manager
+#
+# Distributed under the GNU General Public License version 3
+# https://www.gnu.org/copyleft/gpl.html
+#
+# Authors: syam (aks92@free.fr)
+#
+# Description: I18N: Generate .mo catalog files from existing .po translated files
+#
+
+cd "$(dirname "$(readlink -f "$0")")/../hotspot_login_manager/lang"
+
+# Delete current .mo catalogs, they will be regenerated.
+find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0 rm -r 2>/dev/null
+
+#
+# Generate .mo catalog files from .po translation files.
+#
+# FIXME: This script currently relies on the .po files being named after the locale they provide.
+#        This should probably extract the locale from the .po file instead, but I can't be arsed to do it right now.
+#
+for POFILE in *.po; do
+  POLANG="$(echo "$POFILE" | sed 's@\.po$@@g')"
+  MODIR="$POLANG/LC_MESSAGES"
+  mkdir -p "$MODIR"
+  msgfmt --strict --check --output="$MODIR/hotspot-login-manager.mo" "$POFILE"
+done

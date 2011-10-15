@@ -1,0 +1,38 @@
+#!/bin/sh -e
+#
+# hotspot-login-manager
+# https://github.com/syam44/Hotspot-Login-Manager
+#
+# Distributed under the GNU General Public License version 3
+# https://www.gnu.org/copyleft/gpl.html
+#
+# Authors: syam (aks92@free.fr)
+#
+# Description: I18N: Generate messages.pot translation model
+#
+
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+cat >./hotspot_login_manager/lang/hotspot-login-manager.pot <<EOF
+#
+# hotspot-login-manager
+# https://github.com/syam44/Hotspot-Login-Manager
+#
+# Distributed under the GNU General Public License version 3
+# https://www.gnu.org/copyleft/gpl.html
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: hotspot-login-manager $(cat ./VERSION)\n"
+"POT-Creation-Date: $(date --utc +'%Y-%m-%d %H:%M+%Z')\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: UTF-8\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Generated-By: hotspot-login-manager/devtools/make-i18n-pot\n"
+EOF
+
+find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext2.7-patched --output=- ./hotspot-login-manager | tail -n +17 >>./hotspot_login_manager/lang/hotspot-login-manager.pot
