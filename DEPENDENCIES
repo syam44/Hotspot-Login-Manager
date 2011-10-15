@@ -1,0 +1,4 @@
+Note: the dependencies are expressed as Debian package names.
+
+python2.7
+python-daemon + python-lockfile
