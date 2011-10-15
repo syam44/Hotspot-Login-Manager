@@ -8,9 +8,12 @@
 #
 # Authors: syam (aks92@free.fr)
 #
+# Description: i18n gettext wrapper
+#
 
 
-""" I18N module usage:
+#-----------------------------------------------------------------------------
+''' I18N module usage:
         The main script (hotspot-login-manager) should call hlm_i18n.init(__file__)
         as early as possible.
 
@@ -22,25 +25,32 @@
         as a .pot file in hotspot_login_manager/lang.
         Once the translation is ready as a LANG.po file, put it in hotspot_login_manager/lang
         and run the provided devtools/i18n-gen-mo to create the catalog bundles.
-"""
+'''
 
 
+#-----------------------------------------------------------------------------
 import gettext
 import os
 
 
+#-----------------------------------------------------------------------------
 def init(mainFile):
     localeDir = os.path.realpath(os.path.dirname(mainFile) + '/hotspot_login_manager/lang')
     gettext.bindtextdomain('hotspot-login-manager', localeDir)
     gettext.textdomain('hotspot-login-manager')
 
 
+#-----------------------------------------------------------------------------
 def translators():
-    """ Return the translator functions.
+    ''' Return the translator functions.
 
         _, _N = hlm_i18n.translators()
-    """
+
+        _()  is the basic string translator (one to one mapping, cf. gettext.lgettext).
+        _N() is the plural string translator (mapping depends on the counter, cf. gettext.lngettext).
+    '''
     return (gettext.lgettext, gettext.lngettext)
 
 
+#-----------------------------------------------------------------------------
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
