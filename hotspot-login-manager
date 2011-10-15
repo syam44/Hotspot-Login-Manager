@@ -10,16 +10,22 @@
 # Authors: syam (aks92@free.fr)
 #
 
+# I18N
+import hotspot_login_manager.libs.hlm_i18n
+_, _N = hotspot_login_manager.libs.hlm_i18n.translators()
 
-import hotspotlm.libs.network
+
+from hotspot_login_manager.libs import hlm_network
 
 
 def main():
-    print 'All interfaces', hotspotlm.libs.network.getInterfaces(wifiOnly = False)
-    wirelessIfaces = hotspotlm.libs.network.getInterfaces(wifiOnly = True)
-    print 'Wireless interfaces', wirelessIfaces
+    hotspot_login_manager.libs.hlm_i18n.init(__file__)
+
+    print _(u'All interfaces'), hlm_network.getInterfaces(wifiOnly = False)
+    wirelessIfaces = hlm_network.getInterfaces(wifiOnly = True)
+    print _N(u'Wireless interface', u'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces
     for iface in wirelessIfaces:
-      print '    ', iface, '=', hotspotlm.libs.network.getSSID(iface)
+        print '    ', iface, '=', hlm_network.getSSID(iface)
     return 0
 
 

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd "$(dirname "$(readlink -f "$0")")/.."
+find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext2.7-patched --output-dir=./hotspot_login_manager/lang ./hotspot-login-manager
