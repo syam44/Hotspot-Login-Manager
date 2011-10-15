@@ -10,21 +10,14 @@
 
 # Description : Code to load config
 
-
-
-try:
-        import sys
-        import os
-        import ConfigParser
-
-except ImportError as err:
-        print ("Couldn't load module. {0}".format(err)) 
-        sys.exit(2)
-
-
 # As prototype, configfile is located in ~/.hlmrc.
 
 CONFIGFILE = os.path.expanduser('~/.hlmrc')
+
+import sys
+import os
+import ConfigParser
+
 
 def loadConfig(configfile, plugin):
     '''Return the login and password for a specified plugin
