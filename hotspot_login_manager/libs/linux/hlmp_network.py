@@ -92,7 +92,7 @@ def __IW_GetExtension(ifname, ioctlRequest, data = None):
     ''' Read information from ifname.
     '''
     padding = __WE_IFNAMSIZE - len(ifname)
-    request = array.array('c', ifname + '\0' * padding)
+    request = array.array('c', ifname + ('\0' * padding))
     # put some additional data behind the interface name
     if data is not None:
         request.extend(data)

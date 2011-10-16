@@ -35,4 +35,4 @@ msgstr ""
 "Generated-By: hotspot-login-manager/devtools/make-i18n-pot\n"
 EOF
 
-find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext2.7-patched --output=- ./hotspot-login-manager | tail -n +17 >>./hotspot_login_manager/lang/hotspot-login-manager.pot
+find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext3.1-patched --output=- ./hotspot-login-manager | tail -n +17 >>./hotspot_login_manager/lang/hotspot-login-manager.pot

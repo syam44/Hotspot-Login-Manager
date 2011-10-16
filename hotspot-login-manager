@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3.1
 # -*- coding:utf-8 -*-
 #
 # hotspot-login-manager
@@ -23,7 +23,7 @@ try:
     _, _N = hotspot_login_manager.libs.hlm_i18n.translators()
 
 except ImportError as err:
-    print('Couldn\'t load module. {0}.'.format(err))
+    print('Couldn\'t load module: {0}.'.format(err))
     sys.exit(255)
 
 
@@ -31,11 +31,11 @@ except ImportError as err:
 def main():
     hotspot_login_manager.libs.hlm_i18n.init(__file__)
 
-    print _(u'All interfaces'), hlm_network.getInterfaces(wifiOnly = False)
+    print(_('All interfaces'), hlm_network.getInterfaces(wifiOnly = False))
     wirelessIfaces = hlm_network.getInterfaces(wifiOnly = True)
-    print _N(u'Wireless interface', u'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces
+    print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
     for iface in wirelessIfaces:
-        print '    ', iface, '=', hlm_network.getSSID(iface)
+        print('    ', iface, '=', hlm_network.getSSID(iface))
 
     sys.exit(0)
 

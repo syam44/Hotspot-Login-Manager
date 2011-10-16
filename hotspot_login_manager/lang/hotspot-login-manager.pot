@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: hotspot-login-manager 0.0\n"
-"POT-Creation-Date: 2011-10-15 18:23+UTC\n"
+"POT-Creation-Date: 2011-10-16 13:26+UTC\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Generated-By: hotspot-login-manager/devtools/make-i18n-pot\n"
 
 
-#: ./hotspot-login-manager:24
+#: ./hotspot-login-manager:34
 msgid "All interfaces"
 msgstr ""
 
-#: ./hotspot-login-manager:26
+#: ./hotspot-login-manager:36
 msgid "Wireless interface"
 msgid_plural "Wireless interfaces"
 msgstr[0] ""

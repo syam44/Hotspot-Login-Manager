@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: hotspot-login-manager 0.0\n"
-"POT-Creation-Date: 2011-10-15 18:23+UTC\n"
-"PO-Revision-Date: 2011-10-15 20:23+0200\n"
+"POT-Creation-Date: 2011-10-16 13:26+UTC\n"
+"PO-Revision-Date: 2011-10-16 15:29+0200\n"
 "Last-Translator: syam <aks92@free.fr>\n"
 "Language-Team: French <aks92@free.fr>\n"
 "MIME-Version: 1.0\n"
@@ -21,11 +21,11 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: Lokalize 1.2\n"
 
-#: ./hotspot-login-manager:24
+#: ./hotspot-login-manager:34
 msgid "All interfaces"
 msgstr "Toutes les interfaces"
 
-#: ./hotspot-login-manager:26
+#: ./hotspot-login-manager:36
 msgid "Wireless interface"
 msgid_plural "Wireless interfaces"
 msgstr[0] "Interface sans fil"

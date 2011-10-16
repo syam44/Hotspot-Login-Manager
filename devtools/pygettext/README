@@ -1,5 +1,5 @@
 pygettext has problems handling plural forms. http://bugs.python.org/issue8502
 
-I took the original pygettext2.7 script, and applied the patch mentioned in the issue.
+I ported the patch mentioned in that issue to pygettext3.1 and applied it.
 This way the hlm_i18n module can work (almost) correctly.
 Too bad extracted comments still don't work, but I guess we don't really need them.
