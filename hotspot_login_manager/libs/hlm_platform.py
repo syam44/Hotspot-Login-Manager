@@ -17,9 +17,7 @@ import os
 import platform
 import sys
 import types
-#
-import hotspot_login_manager.libs.hlm_i18n
-_, _N = hotspot_login_manager.libs.hlm_i18n.translators()
+
 
 #-----------------------------------------------------------------------------
 #

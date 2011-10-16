@@ -15,12 +15,12 @@
 
 #-----------------------------------------------------------------------------
 try:
+    import hotspot_login_manager.libs.hlm_i18n
+    hotspot_login_manager.libs.hlm_i18n.init(__file__)
+    #
     import sys
     #
     from hotspot_login_manager.libs import hlm_network
-    #
-    import hotspot_login_manager.libs.hlm_i18n
-    _, _N = hotspot_login_manager.libs.hlm_i18n.translators()
 
 except ImportError as err:
     print('Couldn\'t load module: {0}.'.format(err))
@@ -29,8 +29,6 @@ except ImportError as err:
 
 #-----------------------------------------------------------------------------
 def main():
-    hotspot_login_manager.libs.hlm_i18n.init(__file__)
-
     print(_('All interfaces'), hlm_network.getInterfaces(wifiOnly = False))
     wirelessIfaces = hlm_network.getInterfaces(wifiOnly = True)
     print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
