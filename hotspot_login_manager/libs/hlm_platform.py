@@ -16,7 +16,9 @@
 import os
 import platform
 import sys
-
+#
+import hotspot_login_manager.libs.hlm_i18n
+_, _N = hotspot_login_manager.libs.hlm_i18n.translators()
 
 #-----------------------------------------------------------------------------
 #
@@ -28,7 +30,7 @@ if (os.name == 'posix') and (platform.system() == 'Linux'):
   __platform = 'linux'
 
 else:
-  print('Sorry, your platform ({0}/{1} {2}) is not supported.'.format(os.name, platform.system(), platform.release()))
+  print(_('Sorry, your platform ({0}/{1} {2}) is not yet supported.').format(os.name, platform.system(), platform.release()))
   sys.exit(255)
 
 
@@ -41,6 +43,16 @@ hlmp_network = None
 if __platform == 'linux':
     import hotspot_login_manager.libs.linux.hlmp_network
     hlmp_network = hotspot_login_manager.libs.linux.hlmp_network
+
+
+#-----------------------------------------------------------------------------
+def getPlatform():
+    ''' Return the current platform.
+
+        Currently supported:
+            linux
+    '''
+    return __platform
 
 
 #-----------------------------------------------------------------------------

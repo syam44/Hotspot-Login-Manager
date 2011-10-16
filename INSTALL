@@ -1,6 +1,6 @@
 * First make sure all the required dependencies are installed (cf. "DEPENDENCIES" file).
 
 * If you want to use an internationalized version (hopefully your language will not be out of date):
-    $ make i18n-mo
+    make i18n-mo
 
-* The main daemon program is "hotspot-login-manager"
+* The main daemon program is "hotspot-login-manager" but obviously not yet useable.

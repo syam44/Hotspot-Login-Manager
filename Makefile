@@ -7,6 +7,11 @@
 #
 # Authors: syam (aks92@free.fr)
 #
+# Description: makefile for easier command-line interaction
+#
+# FIXME: declare generators/generated dependencies so we can get
+#        rid of useless .PHONY directives and get a cleaner make chain.
+#
 
 
 #
