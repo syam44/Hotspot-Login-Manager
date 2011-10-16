@@ -11,7 +11,10 @@
 # Description: I18N: Generate .mo catalog files from existing .po translated files
 #
 
-cd "$(dirname "$(readlink -f "$0")")/../hotspot_login_manager/lang"
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+# Make sure the lang directory exists
+mkdir -p ./hotspot_login_manager/lang
 
 # Delete current .mo catalogs, they will be regenerated.
 find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0 rm -r 2>/dev/null
@@ -22,6 +25,7 @@ find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xarg
 # FIXME: This script currently relies on the .po files being named after the locale they provide.
 #        This should probably extract the locale from the .po file instead, but I can't be arsed to do it right now.
 #
+cd "./hotspot_login_manager/lang"
 for POFILE in *.po; do
   POLANG="$(echo "$POFILE" | sed 's@\.po$@@g')"
   MODIR="$POLANG/LC_MESSAGES"

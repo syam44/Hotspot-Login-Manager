@@ -13,6 +13,10 @@
 
 cd "$(dirname "$(readlink -f "$0")")/.."
 
+# Make sure the lang directory exists.
+mkdir -p ./hotspot_login_manager/lang
+
+# .pot header
 cat >./hotspot_login_manager/lang/hotspot-login-manager.pot <<EOF
 #
 # hotspot-login-manager
@@ -35,4 +39,5 @@ msgstr ""
 "Generated-By: hotspot-login-manager/devtools/make-i18n-pot\n"
 EOF
 
+# Extract strings, remove default header (we already have one), and append to existing header
 find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext3.1-patched --output=- ./hotspot-login-manager | tail -n +17 >>./hotspot_login_manager/lang/hotspot-login-manager.pot
