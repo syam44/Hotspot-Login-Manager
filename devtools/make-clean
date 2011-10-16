@@ -8,13 +8,13 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Clean useless files
+# Description: Clean intermediary files
 #
 
 cd "$(dirname "$(readlink -f "$0")")/.."
 # Delete compiled Python cache files.
 find ./ -type f -name '*.pyc' -print0 | xargs -0 rm 2>/dev/null
-# Delete .mo catalogs.
+# Delete generated .mo catalogs.
 find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0 rm -r 2>/dev/null
 
 exit 0

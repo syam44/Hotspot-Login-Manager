@@ -10,7 +10,7 @@
 
 
 #
-# Display available targets.
+# Display available targets
 #
 .PHONY: usage
 usage:
@@ -18,10 +18,11 @@ usage:
 	@echo "    clean       Clean intermediary files."
 	@echo "    i18n-pot    Generate messages.pot translation model."
 	@echo "    i18n-mo     Generate .mo catalog files from existing .po translated files."
+	@echo "    version     Spread version information from root \"VERSION\" file to the whole codebase."
 
 
 #
-# I18N: Generate messages.pot translation model.
+# I18N: Generate messages.pot translation model
 #
 .PHONY: i18n-pot
 i18n-pot:
@@ -29,7 +30,7 @@ i18n-pot:
 
 
 #
-# I18N: Generate .mo catalog files from existing .po translated files.
+# I18N: Generate .mo catalog files from existing .po translated files
 #
 .PHONY: i18n-mo
 i18n-mo:
@@ -37,8 +38,16 @@ i18n-mo:
 
 
 #
-# Clean intermediary files.
+# Clean intermediary files
 #
 .PHONY: clean
 clean:
 	devtools/make-clean
+
+
+#
+# Spread version information from root "VERSION" file to the whole codebase
+#
+.PHONY: version
+version:
+	devtools/make-version
