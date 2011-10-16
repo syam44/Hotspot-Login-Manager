@@ -27,8 +27,10 @@ find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xarg
 #
 cd "./hotspot_login_manager/lang"
 for POFILE in *.po; do
-  POLANG="$(echo "$POFILE" | sed 's@\.po$@@g')"
-  MODIR="$POLANG/LC_MESSAGES"
-  mkdir -p "$MODIR"
-  msgfmt --strict --check --output="$MODIR/hotspot-login-manager.mo" "$POFILE"
+  if [ -f "$POFILE" ]; then
+    POLANG="$(echo "$POFILE" | sed 's@\.po$@@g')"
+    MODIR="$POLANG/LC_MESSAGES"
+    mkdir -p "$MODIR"
+    msgfmt --strict --check --output="$MODIR/hotspot-login-manager.mo" "$POFILE"
+  fi
 done
