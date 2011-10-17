@@ -13,7 +13,9 @@
 
 
 #-----------------------------------------------------------------------------
+#
 # Import the platform-specific implementation.
+#
 from hotspot_login_manager.libs.core import hlm_platform
 
 hlm_platform.install(vars(), 'paths')

@@ -10,10 +10,12 @@
 #
 # Description: Spread version from root "VERSION" file to the whole codebase
 #
-
+set -e
 cd "$(dirname "$(readlink -f "$0")")/.."
 
-cat >./hotspot_login_manager/libs/core/hlm_version_autogen.py <<EOF
+VERSION_PY="./hotspot_login_manager/libs/core/hlm_version_autogen.py"
+
+cat >"$VERSION_PY.tmp" <<EOF
 # -*- coding:utf-8 -*-
 #
 # hotspot-login-manager
@@ -41,3 +43,5 @@ def getVersion():
 #-----------------------------------------------------------------------------
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 EOF
+
+mv "$VERSION_PY.tmp" "$VERSION_PY"
