@@ -31,7 +31,11 @@ class NotificationBackend(object):
     ''' Notification backend wrapper.
     '''
     def __init__(self, backend):
-        self.__backend = backend
+        # Check that the backend is actually supported.
+        if backend in getAvailableBackends():
+            self.__backend = _backendFullPath(backend)
+        else:
+            self.__backend = None
 
 
     def notify(self, message):
@@ -39,25 +43,34 @@ class NotificationBackend(object):
             Return a boolean indicating success.
         '''
         try:
-            subprocess.check_call([_backendFullPath(self.__backend), message])
-            return True
+            if self.__backend != None:
+                subprocess.check_call([self.__backend, message])
+                return True
         except:
-            return False
+            pass
+        return False
 
 
 #-----------------------------------------------------------------------------
 def getAvailableBackends():
     ''' List all available notification backends.
     '''
-    try:
-        availableBackends = []
-        entries = os.listdir(_notifierBackendsPath + '/')
-        for backend in entries:
-            if _isValidBackend(backend):
-                availableBackends.append(backend)
-        return availableBackends
-    except:
-        return []
+    if getAvailableBackends.__cache == None:
+        getAvailableBackends.__cache = []
+        try:
+            entries = os.listdir(_notifierBackendsPath + '/')
+            for backend in entries:
+                if _isValidBackend(backend):
+                    getAvailableBackends.__cache.append(backend)
+        except:
+            pass
+        getAvailableBackends.__cache.sort()
+    return getAvailableBackends.__cache
+
+#
+# Use function attribute to cache the results
+#
+getAvailableBackends.__cache = None
 
 
 #-----------------------------------------------------------------------------
