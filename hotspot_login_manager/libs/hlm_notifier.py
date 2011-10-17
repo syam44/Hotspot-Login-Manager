@@ -8,7 +8,7 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Unpriviledged client notifier.
+# Description: User notification daemon.
 #
 
 
@@ -20,7 +20,7 @@ from hotspot_login_manager.libs import hlm_application
 
 #-----------------------------------------------------------------------------
 def getAvailableBackends():
-    ''' List all available notifier backends.
+    ''' List all available notification backends.
     '''
     try:
         availableBackends = []
@@ -35,7 +35,7 @@ def getAvailableBackends():
 
 #-----------------------------------------------------------------------------
 def notify(backend, message):
-    ''' Send a notification message to the unpriviledged user.
+    ''' Send a notification message to the user through the backend program.
         Return a boolean indicating success.
     '''
     try:
@@ -47,22 +47,22 @@ def notify(backend, message):
 
 #-----------------------------------------------------------------------------
 #
-# Filesystem path for the notifier backends
+# Filesystem path for the notification backends
 #
 __notifierBackendsPath = hlm_application.getPath() + '/notifiers'
 
 
 #-----------------------------------------------------------------------------
 def __backendFullPath(backend):
-    ''' Return the full path of a specific backend.
+    ''' Return the full path of a specific notification backend.
     '''
     return os.path.realpath(__notifierBackendsPath + '/' + backend)
 
 
 #-----------------------------------------------------------------------------
 def __isValidBackend(backend):
-    ''' Determine whether a particular backend is callable from the current user
-        session context.
+    ''' Determine whether a particular notification backend is callable from
+        the current user session context.
     '''
     try:
         backendPath = __backendFullPath(backend)

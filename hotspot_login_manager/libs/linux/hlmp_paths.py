@@ -28,17 +28,10 @@ def daemonPID():
 
 
 #-----------------------------------------------------------------------------
-def clientNotifierSocket():
-    ''' Return the path for the daemon's client notifier socket.
+def notificationSocket():
+    ''' Return the path for the daemon's client notification socket.
     '''
-    return '/var/run/hotspot-login-manager.notifier.socket'
-
-
-#-----------------------------------------------------------------------------
-def clientControlSocket():
-    ''' Return the path for the daemon's client control socket.
-    '''
-    return '/var/run/hotspot-login-manager.control.socket'
+    return '/var/run/hotspot-login-manager.socket'
 
 
 #-----------------------------------------------------------------------------

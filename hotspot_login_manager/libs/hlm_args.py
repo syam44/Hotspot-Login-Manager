@@ -41,38 +41,51 @@ def parse():
     # Set default options
     parser.set_defaults(displayHelp = False,
                         displayVersion = False,
-                        # Daemon
+                        # System daemon
                         runDaemon = False,
                         daemonConfig = None,
-                        # Client
+                        daemonLogLevel = None,
+                        # User notification daemon
                         notifierBackend = None,
                         )
+    # Use a separate variable for the default log level so we can detect usage of the --log option
+    defaultDaemonLogLevel = 'info'
 
     group = OptionGroup(parser, _('General information'))
-    group.add_option('-h', '--help', help = _('Display this help message and exit.'),
+    group.add_option('-h', '--help',
+                     help = _('Display this help message and exit.'),
                      dest = 'displayHelp', action = 'store_true')
-    group.add_option('-v', '--version', help = _('Display the program version and exit.'),
+    group.add_option('-v', '--version',
+                     help = _('Display the program version and exit.'),
                      dest = 'displayVersion', action = 'store_true')
     parser.add_option_group(group)
 
-    group = OptionGroup(parser, _('Daemon options'), _('Those options control how the system daemon is started.'))
-    group.add_option('-d', '--daemon', help = _('Run as a system daemon (unique instance).'),
+    group = OptionGroup(parser, _('System daemon options'))
+    group.add_option('-d', '--daemon',
+                     help = _('Run as a system daemon (unique instance).'),
                      dest = 'runDaemon', action = 'store_true')
-    group.add_option('-c', '--config', metavar = _('FILE'), help = _('Use the configuration file FILE. If this option is missing {0} will be used.').format('«' + hlm_paths.defaultConfigFile() + '»'),
-                     dest = 'daemonConfig', action = 'store')
+    group.add_option('--config', metavar = _('FILE'),
+                     help = _('Use the configuration file FILE. If this option is missing {0} will be used.')
+                            .format(__quoted([hlm_paths.defaultConfigFile()])),
+                     dest = 'daemonConfig')
+    availableLoggingLevels = ['silent', 'error', 'info', 'debug']
+    group.add_option('--log', metavar = _('LEVEL'),
+                     help = _('Determine the verbosity LEVEL of the log messages. From least to most verbose, the possible levels are: {0}. If this option is missing, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
+                            .format(__quoted(availableLoggingLevels), __quoted([defaultDaemonLogLevel]), __quoted(['daemon'])),
+                     dest = 'daemonLogLevel', choices = availableLoggingLevels)
     parser.add_option_group(group)
 
-    group = OptionGroup(parser, _('Client options'), _('Those options interact with the system daemon, possibly from unpriviledged user accounts.'))
+    group = OptionGroup(parser, _('User notification daemon'))
 
     availableNotifierBackends = hlm_notifier.getAvailableBackends()
     if availableNotifierBackends != []:
-        notifierBackendsMessage = _('Available BACKENDs for your current session are: {0}').format('«' + '», «'.join(availableNotifierBackends) + '»')
+        notifierBackendsMessage = _('Available notification backends for your current session are: {0}').format(__quoted(availableNotifierBackends))
     else:
-        notifierBackendsMessage = _('There are no available BACKENDs for your current session. You cannot run a notifier daemon.')
+        notifierBackendsMessage = _('There isn\'t any available notification backend for your current session. You cannot run a notifier daemon.')
 
-    group.add_option('-n', '--notifier', metavar = _('BACKEND'), help = _('Run as an unpriviledged user daemon that receives notifications from the system daemon and forwards them to the user through the BACKEND script.') + ' ' + notifierBackendsMessage,
-                     choices = availableNotifierBackends,
-                     dest = 'notifierBackend', action = 'store')
+    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
+                     help = _('Run as a user daemon that receives notifications from the system daemon and forwards them to the user through the BACKEND program.') + ' ' + notifierBackendsMessage,
+                     choices = availableNotifierBackends, dest = 'notifierBackend')
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
@@ -95,19 +108,26 @@ def parse():
     runNotifier = (options.notifierBackend != None)
 
     # Mutually exclusive options
-    mainCommands = '«--daemon», «--notifier»'
+    mainCommands = __quoted(['--daemon', '--notifier'])
     mainCommandsCount = sum([options.runDaemon, runNotifier])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
         exitWithError(_('Incompatible options: the options {0} are mutually exclusive.').format(mainCommands))
-    if (not options.runDaemon) and (options.daemonConfig != None):
-        exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format('«--config»', '«--daemon»'))
+    if (not options.runDaemon) and ((options.daemonConfig != None) or (options.daemonLogLevel != None)):
+        if options.daemonConfig != None:
+            optionName = '--config'
+        elif options.daemonLogLevel != None:
+            optionName = '--log'
+        exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(__quoted([optionName]), __quoted(['--daemon'])))
+    if options.runDaemon and (options.daemonLogLevel == None):
+        options.daemonLogLevel = defaultDaemonLogLevel
 
     # Return a clean set of options
     args = Values()
     args.runDaemon = options.runDaemon
     args.daemonConfig = options.daemonConfig
+    args.daemonLogLevel = options.daemonLogLevel
     args.notifierBackend = options.notifierBackend
 
     return args
@@ -120,29 +140,36 @@ def __i18nErrorMapper(error):
     if error.startswith('ambiguous option: '):
         match = re.search('^ambiguous option: ([^ ]+) \\((.*)\\?\\)$', error)
         if match != None:
-            optionName = '«' + match.group(1) + '»'
-            possibleOptions = '«' + ('», «').join(match.group(2).split(', ')) + '»'
+            optionName = __quoted([match.group(1)])
+            possibleOptions = __quoted(match.group(2).split(', '))
             exitWithError(_('Ambiguous option: {0} could mean {1}.').format(optionName, possibleOptions))
 
     if error.endswith(' option requires an argument'):
         match = re.search('^([^ ]+) option requires an argument$', error)
         if match != None:
-            optionName = '«' + match.group(1) + '»'
+            optionName = __quoted([match.group(1)])
             exitWithError(_('Option {0} requires an argument.').format(optionName))
 
     if error.startswith('option '):
         match = re.search('^option ([^:]+): invalid choice: \'(.+)\' \(choose from (\'(.+)\')?\)$', error)
         if match != None:
-            optionName = '«' + match.group(1) + '»'
-            invalidChoice = '«' + match.group(2) + '»'
+            optionName = __quoted([match.group(1)])
+            invalidChoice = __quoted([match.group(2)])
             if match.group(4) != None:
-                possibleChoices = '«' + ('», «').join(match.group(4).split('\', \'')) + '»'
+                possibleChoices = __quoted(match.group(4).split('\', \''))
                 possibleChoices = _('Valid arguments are: {0}.').format(possibleChoices)
             else:
                 possibleChoices = _('There isn\'t any possible valid argument. This option is unusable.')
             exitWithError(_('Invalid argument {0} for option {1}.').format(invalidChoice, optionName) + '\n' + possibleChoices)
 
     exitWithError(error)
+
+
+#-----------------------------------------------------------------------------
+def __quoted(items):
+    ''' Wrap a list of items inside « » quotes, separated by commas.
+    '''
+    return '«' + ('», «').join(items) + '»'
 
 
 #-----------------------------------------------------------------------------
