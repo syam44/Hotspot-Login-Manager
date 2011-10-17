@@ -12,7 +12,8 @@
 #              This is the Linux-specific implementation.
 #
 #              Most code in this module has been borrowed from python-wifi 0.5.0 by Roman Joost / Sean Robinson (which is also licensed under GPL).
-#              http://pythonwifi.wikispot.org/
+#                  http://pypi.python.org/pypi/python-wifi/
+#                  http://pythonwifi.wikispot.org/
 #              We definitely don't need the full IW API, so depending on this library makes no sense, especially since it is still alpha and not yet packaged in Debian.
 #
 
