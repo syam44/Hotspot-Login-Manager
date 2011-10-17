@@ -46,6 +46,7 @@ def parse():
                         daemonConfig = None,
                         daemonLogLevel = None,
                         # User notifications
+                        runReauth = False,
                         notifierBackend = None,
                         runStatus = False
                         )
@@ -69,23 +70,26 @@ def parse():
                      help = _('Use the configuration file FILE. If this option is omitted {0} will be used.')
                             .format(_quoted([hlm_paths.defaultConfigFile()])),
                      dest = 'daemonConfig')
-    availableLoggingLevels = ['silent', 'error', 'info', 'debug']
+    availableLoggingLevels = ['error', 'info', 'debug']
     group.add_option('--log', metavar = _('LEVEL'),
                      help = _('Determine the verbosity LEVEL of the log messages. From least to most verbose, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
                             .format(_quoted(availableLoggingLevels), _quoted([defaultDaemonLogLevel]), _quoted(['daemon'])),
                      dest = 'daemonLogLevel', choices = availableLoggingLevels)
     parser.add_option_group(group)
 
-    group = OptionGroup(parser, _('User notifications'))
+    group = OptionGroup(parser, _('Unpriviledged user options'))
 
     availableNotifierBackends = hlm_notifier.getAvailableBackends()
     if availableNotifierBackends != []:
-        notifierBackendsMessage = _('Available notification backends for your current session are: {0}').format(_quoted(availableNotifierBackends))
+        notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(_quoted(availableNotifierBackends))
     else:
-        notifierBackendsMessage = _('There isn\'t any available notification backend for your current session. You cannot run a notifier daemon.')
+        notifierBackendsMessage = _('There isn\'t any available notification backend for your current user session. You cannot run a notifier daemon.')
 
+    group.add_option('-r', '--reauth',
+                     help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
+                     dest = 'runReauth', action = 'store_true')
     group.add_option('-n', '--notifier', metavar = _('BACKEND'),
-                     help = _('Run as a user daemon that receives notifications from the system daemon and forwards them to the user through the BACKEND program.') + ' ' + notifierBackendsMessage,
+                     help = _('Run as a user daemon that forwards the notifications from the system daemon to the end-user using the BACKEND method.') + ' ' + notifierBackendsMessage,
                      choices = availableNotifierBackends, dest = 'notifierBackend')
     group.add_option('-s', '--status',
                      help = _('Print the current status of the system daemon and exit.'),
@@ -112,8 +116,8 @@ def parse():
     runNotifier = (options.notifierBackend != None)
 
     # Mutually exclusive options
-    mainCommands = _quoted(['--daemon', '--notifier', '--status'])
-    mainCommandsCount = sum([options.runDaemon, runNotifier, options.runStatus])
+    mainCommands = _quoted(['--daemon', '--reauth', '--notifier', '--status'])
+    mainCommandsCount = sum([options.runDaemon, options.runReauth, runNotifier, options.runStatus])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
