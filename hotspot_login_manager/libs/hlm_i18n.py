@@ -23,8 +23,7 @@
             _N() is the plural string translator (mapping depends on the counter, cf. gettext.lngettext).
 
         In order to correctly initialize the translation services, the main script (hotspot-login-manager)
-        must import hlm_i18n as early as possible (ideally it should be the first import) and
-        call hlm_i18n.init(__file__) right away.
+        must import hlm_i18n as early as possible (ideally it should be the first import).
 
         Run the provided devtools/i18n-gen-pot script in a shell to extract the strings
         as a .pot file in hotspot_login_manager/lang.
@@ -36,16 +35,18 @@
 
 #-----------------------------------------------------------------------------
 import gettext
-import os
+#
+from hotspot_login_manager.libs import hlm_defaultpaths
 
 
 #-----------------------------------------------------------------------------
-def init(mainFile):
-    ''' Bind the gettext functions to the locales directory and domain.
-    '''
-    localeDir = os.path.realpath(os.path.dirname(mainFile) + '/hotspot_login_manager/lang')
-    gettext.bindtextdomain('hotspot-login-manager', localeDir)
-    gettext.textdomain('hotspot-login-manager')
+#
+# Bind the gettext functions to the locales directory and domain.
+#
+__localeDir = hlm_defaultpaths.application() + '/hotspot_login_manager/lang'
+gettext.bindtextdomain('hotspot-login-manager', __localeDir)
+gettext.textdomain('hotspot-login-manager')
+__localeDir = None
 
 
 #-----------------------------------------------------------------------------

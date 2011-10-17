@@ -8,14 +8,13 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: List network interfaces (either all or wifi), and get the SSID of a wifi interface.
-#              This is a simple wrapper around the platform-specific implementations.
+# Description: List network interfaces (either all or only wireless), and get the SSID of a wireless interface.
 #
 
 
 #-----------------------------------------------------------------------------
+# Import the platform-specific implementation.
 from hotspot_login_manager.libs import hlm_platform
-
 hlm_platform.install(vars(), hlm_platform.hlmp_wifi)
 
 

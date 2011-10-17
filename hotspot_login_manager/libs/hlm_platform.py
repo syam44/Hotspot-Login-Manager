@@ -54,7 +54,7 @@ if __platform == 'linux':
 def install(wrapperVars, importModule):
     ''' Install every public variable/function/class defined in importModule
         into the wrapper module.
-        Modules are not installed.
+        Modules imported by importModule are not installed into the wrapper.
 
         Public items are the ones NOT starting with a double underscore.
 

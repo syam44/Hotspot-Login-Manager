@@ -16,7 +16,6 @@
 #-----------------------------------------------------------------------------
 try:
     import hotspot_login_manager.libs.hlm_i18n
-    hotspot_login_manager.libs.hlm_i18n.init(__file__)
     #
     import sys
     #

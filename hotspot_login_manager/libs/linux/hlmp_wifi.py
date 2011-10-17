@@ -8,12 +8,12 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: List network interfaces (either all or wifi), and get the SSID of a wifi interface.
+# Description: List network interfaces (either all or only wireless), and get the SSID of a wireless interface.
 #              This is the Linux-specific implementation.
 #
 #              Most code in this module has been borrowed from python-wifi 0.5.0 by Roman Joost / Sean Robinson (which is also licensed under GPL).
-#              We definitely don't need the full IW API, so depending on this third party library makes no sense, especially since it is still alpha and not yet packaged in Debian.
 #              http://pythonwifi.wikispot.org/
+#              We definitely don't need the full IW API, so depending on this library makes no sense, especially since it is still alpha and not yet packaged in Debian.
 #
 
 
