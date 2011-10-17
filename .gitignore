@@ -3,3 +3,6 @@
 
 # Compiled .mo gettext catalogs
 hotspot_login_manager/lang/*/*
+
+# Junk editor files
+*.kate-swp
