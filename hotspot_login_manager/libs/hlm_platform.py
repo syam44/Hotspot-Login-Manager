@@ -23,10 +23,10 @@ import types
 #
 # We require at least Python 3.1
 #
-(__python_major, __python_minor, __python_release) = platform.python_version_tuple()
-(__python_major, __python_minor) = (int(__python_major), int(__python_minor))
-if (__python_major < 3) or ((__python_major == 3) and (__python_minor < 1)):
-    print(_('Sorry, the Python interpreter version must be at least 3.1 but yours is {0}.{1}.').format(__python_major, __python_minor))
+(_python_major, _python_minor, _python_release) = platform.python_version_tuple()
+(_python_major, _python_minor) = (int(_python_major), int(_python_minor))
+if (_python_major < 3) or ((_python_major == 3) and (_python_minor < 1)):
+    print(_('Sorry, the Python interpreter version must be at least 3.1 but yours is {0}.{1}.').format(_python_major, _python_minor))
     sys.exit(255)
 
 
@@ -34,10 +34,10 @@ if (__python_major < 3) or ((__python_major == 3) and (__python_minor < 1)):
 #
 # Detect the current platform, and exits if it is not supported.
 #
-__platform = None
+_platform = None
 
 if (os.name == 'posix') and (platform.system() == 'Linux'):
-    __platform = 'linux'
+    _platform = 'linux'
 
 else:
     print(_('Sorry, your platform ({0}/{1} {2}) is not supported.').format(os.name, platform.system(), platform.release()))
@@ -52,7 +52,7 @@ hlmp_paths = None
 hlmp_wifi = None
 
 
-if __platform == 'linux':
+if _platform == 'linux':
     # hlmp_paths
     import hotspot_login_manager.libs.linux.hlmp_paths
     hlmp_paths = hotspot_login_manager.libs.linux.hlmp_paths
@@ -67,7 +67,7 @@ def install(wrapperVars, importModule):
         into the wrapper module.
         Modules imported by importModule are not installed into the wrapper.
 
-        Public items are the ones NOT starting with a double underscore.
+        Public items are the ones NOT starting with an underscore.
 
         Usage:
             from hotspot_login_manager.libs import hlm_platform
@@ -76,7 +76,7 @@ def install(wrapperVars, importModule):
     moduleVars = vars(importModule)
     for varName in moduleVars.keys():
         varObject = moduleVars[varName]
-        if (not type(varObject) is types.ModuleType) and (not varName.startswith('__')):
+        if (not type(varObject) is types.ModuleType) and (not varName.startswith('_')):
             wrapperVars[varName] = varObject
 
 
@@ -87,7 +87,7 @@ def getPlatform():
         Currently supported:
             linux
     '''
-    return __platform
+    return _platform
 
 
 #-----------------------------------------------------------------------------

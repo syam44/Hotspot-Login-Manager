@@ -28,14 +28,14 @@ import struct
 
 #-----------------------------------------------------------------------------
 # Wireless Extensions constants
-__WE_IFNAMSIZE      = 16        # max size of an interface name
-__WE_ESSID_MAX_SIZE = 32        # max size of an SSID string
-__WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
+_WE_IFNAMSIZE      = 16        # max size of an interface name
+_WE_ESSID_MAX_SIZE = 32        # max size of an SSID string
+_WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
 
 
 #-----------------------------------------------------------------------------
 # IOCTL socket
-__ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+_ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 #-----------------------------------------------------------------------------
@@ -72,13 +72,13 @@ def getSSID(iface):
     '''
     if iface not in getNetworkInterfaces(True):
         return None
-    iwpoint = __IwPoint('\x00' * __WE_ESSID_MAX_SIZE)
-    (status, result) = __IW_GetExtension(iface, __WE_SIOCGIWESSID, iwpoint.packed)
+    iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
+    (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
     return iwpoint.result.tostring().strip('\x00')
 
 
 #-----------------------------------------------------------------------------
-class __IwPoint(object):
+class _IwPoint(object):
     ''' Store iw_point data.
     '''
     def __init__(self, data, flags = 0):
@@ -89,10 +89,10 @@ class __IwPoint(object):
 
 
 #-----------------------------------------------------------------------------
-def __IW_GetExtension(ifname, ioctlRequest, data = None):
+def _IW_GetExtension(ifname, ioctlRequest, data = None):
     ''' Read information from ifname.
     '''
-    padding = __WE_IFNAMSIZE - len(ifname)
+    padding = _WE_IFNAMSIZE - len(ifname)
     request = array.array('c', ifname + ('\0' * padding))
     # put some additional data behind the interface name
     if data is not None:
@@ -101,8 +101,8 @@ def __IW_GetExtension(ifname, ioctlRequest, data = None):
         padding = 32
         request.extend('\0' * padding)
 
-    result = fcntl.ioctl(__ioctlSocket.fileno(), ioctlRequest, request)
-    return (result, request[__WE_IFNAMSIZE:])
+    result = fcntl.ioctl(_ioctlSocket.fileno(), ioctlRequest, request)
+    return (result, request[_WE_IFNAMSIZE:])
 
 
 #-----------------------------------------------------------------------------

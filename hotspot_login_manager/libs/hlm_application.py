@@ -25,13 +25,13 @@ from hotspot_login_manager.libs import hlm_version
 # We know this module is located in the hotspot_login_manager/libs directory
 # so we just go up one level.
 #
-__applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/..')
+_applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/..')
 
 def getPath():
     ''' Return the root path of the application.
         Note that the hotspot_login_manager directory is considered to be the root path.
     '''
-    return __applicationPath
+    return _applicationPath
 
 
 #-----------------------------------------------------------------------------

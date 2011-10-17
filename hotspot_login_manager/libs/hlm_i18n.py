@@ -43,10 +43,10 @@ from hotspot_login_manager.libs import hlm_application
 #
 # Bind the gettext functions to the locales directory and domain.
 #
-__localeDir = hlm_application.getPath() + '/lang'
-gettext.bindtextdomain('hotspot-login-manager', __localeDir)
+_localeDir = hlm_application.getPath() + '/lang'
+gettext.bindtextdomain('hotspot-login-manager', _localeDir)
 gettext.textdomain('hotspot-login-manager')
-__localeDir = None
+_localeDir = None
 
 
 #-----------------------------------------------------------------------------
@@ -56,10 +56,10 @@ __localeDir = None
 #       _()  is the basic string translator (one to one mapping, cf. gettext.lgettext).
 #       _N() is the plural string translator (mapping depends on the counter, cf. gettext.lngettext).
 #
-__builtinVars = vars()['__builtins__']
-__builtinVars['_'] = gettext.lgettext
-__builtinVars['_N'] = gettext.lngettext
-__builtinVars = None
+_builtinVars = vars()['__builtins__']
+_builtinVars['_'] = gettext.lgettext
+_builtinVars['_N'] = gettext.lngettext
+_builtinVars = None
 
 
 #-----------------------------------------------------------------------------

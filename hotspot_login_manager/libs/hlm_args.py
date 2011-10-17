@@ -37,7 +37,7 @@ def parse():
     '''
     parser = OptionParser(usage = _('Usage: %prog OPTIONS'), add_help_option = False)
     # Map Python english error messages to custom i18n messages
-    parser.error = __i18nErrorMapper
+    parser.error = _i18nErrorMapper
     # Set default options
     parser.set_defaults(displayHelp = False,
                         displayVersion = False,
@@ -66,12 +66,12 @@ def parse():
                      dest = 'runDaemon', action = 'store_true')
     group.add_option('--config', metavar = _('FILE'),
                      help = _('Use the configuration file FILE. If this option is missing {0} will be used.')
-                            .format(__quoted([hlm_paths.defaultConfigFile()])),
+                            .format(_quoted([hlm_paths.defaultConfigFile()])),
                      dest = 'daemonConfig')
     availableLoggingLevels = ['silent', 'error', 'info', 'debug']
     group.add_option('--log', metavar = _('LEVEL'),
                      help = _('Determine the verbosity LEVEL of the log messages. From least to most verbose, the possible levels are: {0}. If this option is missing, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
-                            .format(__quoted(availableLoggingLevels), __quoted([defaultDaemonLogLevel]), __quoted(['daemon'])),
+                            .format(_quoted(availableLoggingLevels), _quoted([defaultDaemonLogLevel]), _quoted(['daemon'])),
                      dest = 'daemonLogLevel', choices = availableLoggingLevels)
     parser.add_option_group(group)
 
@@ -79,7 +79,7 @@ def parse():
 
     availableNotifierBackends = hlm_notifier.getAvailableBackends()
     if availableNotifierBackends != []:
-        notifierBackendsMessage = _('Available notification backends for your current session are: {0}').format(__quoted(availableNotifierBackends))
+        notifierBackendsMessage = _('Available notification backends for your current session are: {0}').format(_quoted(availableNotifierBackends))
     else:
         notifierBackendsMessage = _('There isn\'t any available notification backend for your current session. You cannot run a notifier daemon.')
 
@@ -108,7 +108,7 @@ def parse():
     runNotifier = (options.notifierBackend != None)
 
     # Mutually exclusive options
-    mainCommands = __quoted(['--daemon', '--notifier'])
+    mainCommands = _quoted(['--daemon', '--notifier'])
     mainCommandsCount = sum([options.runDaemon, runNotifier])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
@@ -119,7 +119,7 @@ def parse():
             optionName = '--config'
         elif options.daemonLogLevel != None:
             optionName = '--log'
-        exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(__quoted([optionName]), __quoted(['--daemon'])))
+        exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(_quoted([optionName]), _quoted(['--daemon'])))
     if options.runDaemon and (options.daemonLogLevel == None):
         options.daemonLogLevel = defaultDaemonLogLevel
 
@@ -134,29 +134,29 @@ def parse():
 
 
 #-----------------------------------------------------------------------------
-def __i18nErrorMapper(error):
+def _i18nErrorMapper(error):
     ''' Map Python english error messages to i18n messages.
     '''
     if error.startswith('ambiguous option: '):
         match = re.search('^ambiguous option: ([^ ]+) \\((.*)\\?\\)$', error)
         if match != None:
-            optionName = __quoted([match.group(1)])
-            possibleOptions = __quoted(match.group(2).split(', '))
+            optionName = _quoted([match.group(1)])
+            possibleOptions = _quoted(match.group(2).split(', '))
             exitWithError(_('Ambiguous option: {0} could mean {1}.').format(optionName, possibleOptions))
 
     if error.endswith(' option requires an argument'):
         match = re.search('^([^ ]+) option requires an argument$', error)
         if match != None:
-            optionName = __quoted([match.group(1)])
+            optionName = _quoted([match.group(1)])
             exitWithError(_('Option {0} requires an argument.').format(optionName))
 
     if error.startswith('option '):
         match = re.search('^option ([^:]+): invalid choice: \'(.+)\' \(choose from (\'(.+)\')?\)$', error)
         if match != None:
-            optionName = __quoted([match.group(1)])
-            invalidChoice = __quoted([match.group(2)])
+            optionName = _quoted([match.group(1)])
+            invalidChoice = _quoted([match.group(2)])
             if match.group(4) != None:
-                possibleChoices = __quoted(match.group(4).split('\', \''))
+                possibleChoices = _quoted(match.group(4).split('\', \''))
                 possibleChoices = _('Valid arguments are: {0}.').format(possibleChoices)
             else:
                 possibleChoices = _('There isn\'t any possible valid argument. This option is unusable.')
@@ -166,7 +166,7 @@ def __i18nErrorMapper(error):
 
 
 #-----------------------------------------------------------------------------
-def __quoted(items):
+def _quoted(items):
     ''' Wrap a list of items inside « » quotes, separated by commas.
     '''
     return '«' + ('», «').join(items) + '»'
