@@ -24,7 +24,8 @@ import types
 # We require at least Python 3.1
 #
 (__python_major, __python_minor, __python_release) = platform.python_version_tuple()
-if (int(__python_major) < 3) or ((int(__python_major) == 3) and (int(__python_minor) < 1)):
+(__python_major, __python_minor) = (int(__python_major), int(__python_minor))
+if (__python_major < 3) or ((__python_major == 3) and (__python_minor < 1)):
     print(_('Sorry, the Python interpreter version must be at least 3.1 but yours is {0}.{1}.').format(__python_major, __python_minor))
     sys.exit(255)
 

@@ -1,0 +1,6 @@
+This directory contains the auto-generated .pot translation model (using "make i18n-pot"), as well as any translated .po files.
+The .po files MUST be named after the locale they provide (eg. fr.po).
+
+The subdirectories contain the various compiled .mo catalog bundles in the standard format <LOCALE>/LC_MESSAGES/<DOMAIN>.mo
+The application domain is "hotspot-login-manager".
+To compile the .mo catalog bundles use "make i18n-mo".
