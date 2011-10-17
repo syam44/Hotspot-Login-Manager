@@ -8,7 +8,7 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Default filesystem paths.
+# Description: Various filesystem paths.
 #              This is the Linux-specific implementation.
 #
 

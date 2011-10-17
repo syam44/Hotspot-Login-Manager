@@ -13,8 +13,11 @@
 #              This is the KDE4 version, using kdialog under the hood.
 #
 
-
-#
-# "$1" is the notification message.
-#
-kdialog --passivepopup "$1" 5 --title "Hotspot Login Manager"
+if [ "$1" = "" ]; then
+  # Check if we are running on KDE4
+  [ -x "$(which kdialog)" ] && [ "$KDE_FULL_SESSION" = "true" ] && [ "$KDE_SESSION_VERSION" = "4" ] && exit 0
+  exit 1
+else
+  # Show the notification
+  kdialog --passivepopup "$1" 5 --title "Hotspot Login Manager"
+fi

@@ -17,8 +17,9 @@ from optparse import OptionParser, OptionGroup, Values
 import re
 import sys
 #
-from hotspot_login_manager.libs import hlm_defaultpaths
-from hotspot_login_manager.libs import hlm_version
+from hotspot_login_manager.libs import hlm_application
+from hotspot_login_manager.libs import hlm_notifier
+from hotspot_login_manager.libs import hlm_paths
 
 
 #-----------------------------------------------------------------------------
@@ -50,20 +51,26 @@ def parse():
     group = OptionGroup(parser, _('General information'))
     group.add_option('-h', '--help', help = _('Display this help message and exit.'),
                      dest = 'displayHelp', action = 'store_true')
-    group.add_option('-v', '--hversion', help = _('Display the program version and exit.'),
+    group.add_option('-v', '--version', help = _('Display the program version and exit.'),
                      dest = 'displayVersion', action = 'store_true')
     parser.add_option_group(group)
 
-    group = OptionGroup(parser, _('Daemon commands'), _('Those commands control how the system daemon is started.'))
+    group = OptionGroup(parser, _('Daemon options'), _('Those options control how the system daemon is started.'))
     group.add_option('-d', '--daemon', help = _('Run as a system daemon (unique instance).'),
                      dest = 'runDaemon', action = 'store_true')
-    group.add_option('-c', '--config', metavar = 'FILE', help = _('Use the configuration file FILE. If this option is missing {0} will be used.').format('«' + hlm_defaultpaths.defaultConfigFile() + '»'),
+    group.add_option('-c', '--config', metavar = _('FILE'), help = _('Use the configuration file FILE. If this option is missing {0} will be used.').format('«' + hlm_paths.defaultConfigFile() + '»'),
                      dest = 'daemonConfig', action = 'store')
     parser.add_option_group(group)
 
-    availableNotifierBackends = __getAvailableNotifierBackends()
-    group = OptionGroup(parser, _('Client commands'), _('Those commands interact with the system daemon, possibly from unpriviledged user accounts.'))
-    group.add_option('-n', '--notifier', metavar="BACKEND", help = _('Run as an unpriviledged user daemon that receives notifications from the system daemon and forwards them to the user through the BACKEND script. Available BACKENDs are: {0}').format('«' + '», «'.join(availableNotifierBackends) + '»'),
+    group = OptionGroup(parser, _('Client options'), _('Those options interact with the system daemon, possibly from unpriviledged user accounts.'))
+
+    availableNotifierBackends = hlm_notifier.getAvailableBackends()
+    if availableNotifierBackends != []:
+        notifierBackendsMessage = _('Available BACKENDs for your current session are: {0}').format('«' + '», «'.join(availableNotifierBackends) + '»')
+    else:
+        notifierBackendsMessage = _('There are no available BACKENDs for your current session. You cannot run a notifier daemon.')
+
+    group.add_option('-n', '--notifier', metavar = _('BACKEND'), help = _('Run as an unpriviledged user daemon that receives notifications from the system daemon and forwards them to the user through the BACKEND script.') + ' ' + notifierBackendsMessage,
                      choices = availableNotifierBackends,
                      dest = 'notifierBackend', action = 'store')
     parser.add_option_group(group)
@@ -72,7 +79,7 @@ def parse():
 
     # Handle --help and --version and exit immediately
     if options.displayHelp or options.displayVersion:
-        print('Hotspot Login Manager {0}'.format(hlm_version.getVersion()))
+        print('Hotspot Login Manager {0}'.format(hlm_application.getVersion()))
         if options.displayHelp:
           print()
           parser.print_help()
@@ -88,8 +95,12 @@ def parse():
     runNotifier = (options.notifierBackend != None)
 
     # Mutually exclusive options
-    if sum([options.runDaemon, runNotifier]) > 1:
-        exitWithError(_('Incompatible options: the options {0} are mutually exclusive.').format('«--daemon», «--notifier»'))
+    mainCommands = '«--daemon», «--notifier»'
+    mainCommandsCount = sum([options.runDaemon, runNotifier])
+    if mainCommandsCount == 0:
+        exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
+    if mainCommandsCount > 1:
+        exitWithError(_('Incompatible options: the options {0} are mutually exclusive.').format(mainCommands))
     if (not options.runDaemon) and (options.daemonConfig != None):
         exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format('«--config»', '«--daemon»'))
 
@@ -120,22 +131,18 @@ def __i18nErrorMapper(error):
             exitWithError(_('Option {0} requires an argument.').format(optionName))
 
     if error.startswith('option '):
-        match = re.search('^option ([^:]+): invalid choice: \'(.+)\' \(choose from \'(.+)\'\)$', error)
+        match = re.search('^option ([^:]+): invalid choice: \'(.+)\' \(choose from (\'(.+)\')?\)$', error)
         if match != None:
             optionName = '«' + match.group(1) + '»'
             invalidChoice = '«' + match.group(2) + '»'
-            possibleChoices = '«' + ('», «').join(match.group(3).split('\', \'')) + '»'
-            exitWithError(_('Invalid argument {0} for option {1}.\nValid arguments are: {2}.').format(invalidChoice, optionName, possibleChoices))
+            if match.group(4) != None:
+                possibleChoices = '«' + ('», «').join(match.group(4).split('\', \'')) + '»'
+                possibleChoices = _('Valid arguments are: {0}.').format(possibleChoices)
+            else:
+                possibleChoices = _('There isn\'t any possible valid argument. This option is unusable.')
+            exitWithError(_('Invalid argument {0} for option {1}.').format(invalidChoice, optionName) + '\n' + possibleChoices)
 
     exitWithError(error)
-
-
-#-----------------------------------------------------------------------------
-def __getAvailableNotifierBackends():
-    ''' Retrieve available notifier backends from the hotspot_login_manager/notifiers folder.
-    '''
-    # TODO: implement // move to hlm_notifier module
-    return ['kde4']
 
 
 #-----------------------------------------------------------------------------

@@ -36,14 +36,14 @@
 #-----------------------------------------------------------------------------
 import gettext
 #
-from hotspot_login_manager.libs import hlm_defaultpaths
+from hotspot_login_manager.libs import hlm_application
 
 
 #-----------------------------------------------------------------------------
 #
 # Bind the gettext functions to the locales directory and domain.
 #
-__localeDir = hlm_defaultpaths.application() + '/hotspot_login_manager/lang'
+__localeDir = hlm_application.getPath() + '/lang'
 gettext.bindtextdomain('hotspot-login-manager', __localeDir)
 gettext.textdomain('hotspot-login-manager')
 __localeDir = None

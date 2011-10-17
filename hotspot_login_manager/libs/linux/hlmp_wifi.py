@@ -70,7 +70,7 @@ def getSSID(iface):
         Uses IOCTLs under the hood.
     '''
     if iface not in getNetworkInterfaces(True):
-      return None
+        return None
     iwpoint = __IwPoint('\x00' * __WE_ESSID_MAX_SIZE)
     (status, result) = __IW_GetExtension(iface, __WE_SIOCGIWESSID, iwpoint.packed)
     return iwpoint.result.tostring().strip('\x00')

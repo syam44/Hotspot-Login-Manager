@@ -14,10 +14,10 @@
 
 
 #-----------------------------------------------------------------------------
+import sys # This must be imported first to ensure sys.exit() works
 try:
+    # Do not import any HLM module before this one, translation services are needed everywhere!
     import hotspot_login_manager.libs.hlm_i18n
-    #
-    import sys
     #
     from hotspot_login_manager.libs import hlm_args
 
@@ -42,19 +42,18 @@ def main():
         wirelessIfaces = hlm_wifi.getNetworkInterfaces(wifiOnly = True)
         print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
         for iface in wirelessIfaces:
-            print('    ', iface, '=', hlm_network.getSSID(iface))
+            print('    ', iface, '=', hlm_wifi.getSSID(iface))
 
     # --notifier=kde4
-    elif args.notifierBackend != None:
-        import subprocess
+    if args.notifierBackend != None:
         import time
-        from hotspot_login_manager.libs import hlm_defaultpaths
+        from hotspot_login_manager.libs import hlm_notifier
         #
         iteration = 0
         while True:
             iteration += 1
             message = _('Notification #{0}\nIt works!').format(iteration)
-            subprocess.Popen([hlm_defaultpaths.application() + '/hotspot_login_manager/notifiers/' + args.notifierBackend, message])
+            hlm_notifier.notify(args.notifierBackend, message)
             time.sleep(5)
 
     sys.exit(0)

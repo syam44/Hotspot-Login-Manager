@@ -8,32 +8,37 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Default filesystem paths.
+# Description: Global application information.
 #
 
 
 #-----------------------------------------------------------------------------
-# Import the platform-specific implementation.
-from hotspot_login_manager.libs import hlm_platform
-hlm_platform.install(vars(), hlm_platform.hlmp_defaultpaths)
-
-
-#-----------------------------------------------------------------------------
 import os
+from hotspot_login_manager.libs import hlm_version
 
 
 #-----------------------------------------------------------------------------
 #
 # Application root path.
-# We know this module is located in the hotspot_login_manager/libs directory
-# so we just go up two levels.
+# Note that the hotspot_login_manager directory is considered to be the root path.
 #
-__applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../..')
+# We know this module is located in the hotspot_login_manager/libs directory
+# so we just go up one level.
+#
+__applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/..')
 
-def application():
+def getPath():
     ''' Return the root path of the application.
+        Note that the hotspot_login_manager directory is considered to be the root path.
     '''
     return __applicationPath
+
+
+#-----------------------------------------------------------------------------
+#
+# Application version.
+#
+getVersion = hlm_version.getVersion
 
 
 #-----------------------------------------------------------------------------
