@@ -23,20 +23,16 @@
             _N() is the plural string translator (mapping depends on the counter, cf. gettext.lngettext).
 
         In order to correctly initialize the translation services, the main script (hotspot-login-manager)
-        must import hlm_i18n as early as possible (ideally it should be the first import).
+        must import hlm_i18n as early as possible (it really should be the first HLM import).
 
-        Run the provided devtools/i18n-gen-pot script in a shell to extract the strings
-        as a .pot file in hotspot_login_manager/lang.
-
-        Once the translation is ready as a LOCALENAME.po file, put it in hotspot_login_manager/lang
-        and run the provided devtools/i18n-gen-mo to create the catalog bundles.
+        See hotspot_login_manager/lang/README for information about translation files (.pot / .po / .mo).
 '''
 
 
 #-----------------------------------------------------------------------------
 import gettext
 #
-from hotspot_login_manager.libs import hlm_application
+from hotspot_login_manager.libs.core import hlm_application
 
 
 #-----------------------------------------------------------------------------

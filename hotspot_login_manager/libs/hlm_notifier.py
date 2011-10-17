@@ -15,7 +15,15 @@
 #-----------------------------------------------------------------------------
 import os
 import subprocess
-from hotspot_login_manager.libs import hlm_application
+#
+from hotspot_login_manager.libs.core import hlm_application
+
+
+#-----------------------------------------------------------------------------
+#
+# Filesystem path for the notification backends
+#
+_notifierBackendsPath = hlm_application.getPath() + '/notifiers'
 
 
 #-----------------------------------------------------------------------------
@@ -50,13 +58,6 @@ def getAvailableBackends():
         return availableBackends
     except:
         return []
-
-
-#-----------------------------------------------------------------------------
-#
-# Filesystem path for the notification backends
-#
-_notifierBackendsPath = hlm_application.getPath() + '/notifiers'
 
 
 #-----------------------------------------------------------------------------

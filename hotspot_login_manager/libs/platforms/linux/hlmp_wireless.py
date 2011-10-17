@@ -27,35 +27,43 @@ import struct
 
 
 #-----------------------------------------------------------------------------
+#
 # Wireless Extensions constants
+#
 _WE_IFNAMSIZE      = 16        # max size of an interface name
 _WE_ESSID_MAX_SIZE = 32        # max size of an SSID string
 _WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
 
 
 #-----------------------------------------------------------------------------
+#
 # IOCTL socket
+#
 _ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+#
+# Pre-compiled regular expression
+#
+_networkInterfacesRegex = re.compile('^ *([a-z]{2,}[0-9]*):')
 
 
 #-----------------------------------------------------------------------------
-def getNetworkInterfaces(wifiOnly = False):
+def getNetworkInterfaces(wirelessOnly = False):
     ''' Return the list of all network interface names.
-        If wifiOnly is True, only the connected wireless interfaces are returned.
+        If wirelessOnly is True, only the connected wireless interfaces are returned.
 
         Uses /prov/net/dev or /proc/net/wireless under the hood.
     '''
-    regex = re.compile('^ *([a-z]{2,}[0-9]*):')
     ifaces = []
 
-    if wifiOnly == True:
+    if wirelessOnly == True:
         fd = open('/proc/net/wireless', 'r')
     else:
         fd = open('/proc/net/dev', 'r')
 
     for line in fd:
         try:
-            ifaces.append(regex.search(line).group(1))
+            ifaces.append(_networkInterfacesRegex.search(line).group(1))
         except AttributeError:
             pass
 

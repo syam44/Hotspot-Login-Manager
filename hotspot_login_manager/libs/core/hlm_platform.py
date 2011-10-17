@@ -17,6 +17,9 @@ import os
 import platform
 import sys
 import types
+#
+from hotspot_login_manager.libs.core import hlm_application
+from hotspot_login_manager.libs.core import hlm_plugin
 
 
 #-----------------------------------------------------------------------------
@@ -32,7 +35,7 @@ if (_python_major < 3) or ((_python_major == 3) and (_python_minor < 1)):
 
 #-----------------------------------------------------------------------------
 #
-# Detect the current platform, and exits if it is not supported.
+# Detect the current platform, and exit if it is not supported.
 #
 _platform = None
 
@@ -43,51 +46,30 @@ else:
     print(_('Sorry, your platform ({0}/{1} {2}) is not supported.').format(os.name, platform.system(), platform.release()))
     sys.exit(255)
 
-
-#-----------------------------------------------------------------------------
 #
-# Load platform-specific modules
+# Plugins path for the current platform.
 #
-hlmp_paths = None
-hlmp_wifi = None
-
-
-if _platform == 'linux':
-    # hlmp_paths
-    import hotspot_login_manager.libs.linux.hlmp_paths
-    hlmp_paths = hotspot_login_manager.libs.linux.hlmp_paths
-    # hlmp_wifi
-    import hotspot_login_manager.libs.linux.hlmp_wifi
-    hlmp_wifi = hotspot_login_manager.libs.linux.hlmp_wifi
+_platformPluginsPath = hlm_application.getPath() + '/libs/platforms/' + _platform
 
 
 #-----------------------------------------------------------------------------
-def install(wrapperVars, importModule):
-    ''' Install every public variable/function/class defined in importModule
-        into the wrapper module.
-        Modules imported by importModule are not installed into the wrapper.
+def install(wrapperVars, moduleName):
+    ''' Import moduleName and install  into the wrapper module every public
+        variable/function/class it defines.
+        Modules imported by moduleName are not installed into the wrapper.
 
         Public items are the ones NOT starting with an underscore.
 
         Usage:
-            from hotspot_login_manager.libs import hlm_platform
-            hlm_platform.install(vars(), hlm_platform.hlmp_module)
+            from hotspot_login_manager.libs.core import hlm_platform
+            hlm_platform.install(vars(), 'module')
     '''
-    moduleVars = vars(importModule)
+    moduleObject = hlm_plugin.load('hlmp_' + moduleName, _platformPluginsPath)
+    moduleVars = vars(moduleObject)
     for varName in moduleVars.keys():
         varObject = moduleVars[varName]
         if (not type(varObject) is types.ModuleType) and (not varName.startswith('_')):
             wrapperVars[varName] = varObject
-
-
-#-----------------------------------------------------------------------------
-def getPlatform():
-    ''' Return the current platform.
-
-        Currently supported:
-            linux
-    '''
-    return _platform
 
 
 #-----------------------------------------------------------------------------

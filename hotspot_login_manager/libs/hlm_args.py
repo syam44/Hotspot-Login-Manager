@@ -17,9 +17,9 @@ from optparse import OptionParser, OptionGroup, Values
 import re
 import sys
 #
-from hotspot_login_manager.libs import hlm_application
+from hotspot_login_manager.libs.core import hlm_application
+from hotspot_login_manager.libs.core import hlm_paths
 from hotspot_login_manager.libs import hlm_notifier
-from hotspot_login_manager.libs import hlm_paths
 
 
 #-----------------------------------------------------------------------------
@@ -137,6 +137,9 @@ def parse():
 def _i18nErrorMapper(error):
     ''' Map Python english error messages to i18n messages.
     '''
+    #
+    # No need to pre-compile the regexes as we exit immediately after using it exactly once.
+    #
     if error.startswith('ambiguous option: '):
         match = re.search('^ambiguous option: ([^ ]+) \\((.*)\\?\\)$', error)
         if match != None:
@@ -167,7 +170,7 @@ def _i18nErrorMapper(error):
 
 #-----------------------------------------------------------------------------
 def _quoted(items):
-    ''' Wrap a list of items inside « » quotes, separated by commas.
+    ''' Convenience function for wrapping a list of items inside « » quotes, separated by commas.
     '''
     return '«' + ('», «').join(items) + '»'
 

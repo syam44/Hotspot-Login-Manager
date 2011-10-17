@@ -1,4 +1,4 @@
-In hotspot_login_manager/libs/linux/hlmp_wifi.py:
+In hotspot_login_manager/libs/platforms/linux/hlmp_wireless.py:
     Most code in this module has been borrowed from python-wifi 0.5.0 by Roman Joost / Sean Robinson (which is also licensed under GPL).
         http://pypi.python.org/pypi/python-wifi/
         http://pythonwifi.wikispot.org/

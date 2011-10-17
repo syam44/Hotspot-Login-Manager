@@ -11,59 +11,29 @@
 #
 # Description: Entry point.
 #
+# Note: Keeping the main script to the bare minimum enhances load-time
+#       thanks to precompiled .pyc files.
+#       So yeah, *bare* minimum.
+#
 
 
 #-----------------------------------------------------------------------------
 import sys # This must be imported first to ensure sys.exit() works
 try:
     # Do not import any HLM module before this one, translation services are needed everywhere!
-    import hotspot_login_manager.libs.hlm_i18n
+    import hotspot_login_manager.libs.core.hlm_i18n
     #
-    from hotspot_login_manager.libs import hlm_args
-    from hotspot_login_manager.libs import hlm_notifier
+    from hotspot_login_manager.libs import hlm_main
 
 except ImportError as err:
+    # No i18n here since we have no guarantee that the translation services are correctly installed.
     print('Couldn\'t load module: {0}.'.format(err))
     sys.exit(255)
 
 
 #-----------------------------------------------------------------------------
-def main():
-    args = hlm_args.parse()
-
-    #
-    # Sample code below
-    #
-
-    # --daemon
-    if args.runDaemon:
-        from hotspot_login_manager.libs import hlm_wifi
-        #
-        print(_('All interfaces'), hlm_wifi.getNetworkInterfaces(wifiOnly = False))
-        wirelessIfaces = hlm_wifi.getNetworkInterfaces(wifiOnly = True)
-        print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
-        for iface in wirelessIfaces:
-            print('    ', iface, '=', hlm_wifi.getSSID(iface))
-
-    # --notifier=kde4
-    if args.notifierBackend != None:
-        import time
-        from hotspot_login_manager.libs import hlm_notifier
-        #
-        notifier = hlm_notifier.NotificationBackend(args.notifierBackend)
-        iteration = 0
-        while True:
-            iteration += 1
-            message = _('Notification #{0}\nIt works!').format(iteration)
-            notifier.notify(message)
-            time.sleep(5)
-
-    sys.exit(0)
-
-
-#-----------------------------------------------------------------------------
 if __name__ == '__main__':
-   main()
+   hlm_main.main()
 
 
 #-----------------------------------------------------------------------------
