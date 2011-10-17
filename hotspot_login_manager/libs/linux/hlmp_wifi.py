@@ -38,9 +38,9 @@ __ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 #-----------------------------------------------------------------------------
-def getInterfaces(wifiOnly = False):
+def getNetworkInterfaces(wifiOnly = False):
     ''' Return the list of all network interface names.
-        If wifiOnly is True, only the wireless interfaces are returned.
+        If wifiOnly is True, only the connected wireless interfaces are returned.
 
         Uses /prov/net/dev or /proc/net/wireless under the hood.
     '''
@@ -65,14 +65,14 @@ def getInterfaces(wifiOnly = False):
 #-----------------------------------------------------------------------------
 def getSSID(iface):
     ''' Return the SSID of the specified wireless interface.
-        If iface does not designate a valid wireless interface, return None.
+        If iface does not designate a connected wireless interface, return None.
 
         Uses IOCTLs under the hood.
     '''
-    if iface not in getInterfaces(True):
+    if iface not in getNetworkInterfaces(True):
       return None
     iwpoint = __IwPoint('\x00' * __WE_ESSID_MAX_SIZE)
-    status, result = __IW_GetExtension(iface, __WE_SIOCGIWESSID, iwpoint.packed)
+    (status, result) = __IW_GetExtension(iface, __WE_SIOCGIWESSID, iwpoint.packed)
     return iwpoint.result.tostring().strip('\x00')
 
 
@@ -82,7 +82,7 @@ class __IwPoint(object):
     '''
     def __init__(self, data, flags = 0):
         self.result = array.array('c', data)
-        caddr_t, length = self.result.buffer_info()
+        (caddr_t, length) = self.result.buffer_info()
         # Format: P pointer to data, H length, H flags
         self.packed = struct.pack('PHH', caddr_t, length, flags)
 

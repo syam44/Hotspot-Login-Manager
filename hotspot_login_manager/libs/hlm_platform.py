@@ -29,7 +29,7 @@ if (os.name == 'posix') and (platform.system() == 'Linux'):
   __platform = 'linux'
 
 else:
-  print(_('Sorry, your platform ({0}/{1} {2}) is not yet supported.').format(os.name, platform.system(), platform.release()))
+  print(_('Sorry, your platform ({0}/{1} {2}) is not supported.').format(os.name, platform.system(), platform.release()))
   sys.exit(255)
 
 
@@ -37,13 +37,17 @@ else:
 #
 # Load platform-specific modules
 #
-hlmp_network = None
+hlmp_defaultpaths = None
+hlmp_wifi = None
 
 
 if __platform == 'linux':
-    # hlmp_network
-    import hotspot_login_manager.libs.linux.hlmp_network
-    hlmp_network = hotspot_login_manager.libs.linux.hlmp_network
+    # hlmp_defaultpaths
+    import hotspot_login_manager.libs.linux.hlmp_defaultpaths
+    hlmp_defaultpaths = hotspot_login_manager.libs.linux.hlmp_defaultpaths
+    # hlmp_wifi
+    import hotspot_login_manager.libs.linux.hlmp_wifi
+    hlmp_wifi = hotspot_login_manager.libs.linux.hlmp_wifi
 
 
 #-----------------------------------------------------------------------------

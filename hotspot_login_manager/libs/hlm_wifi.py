@@ -15,7 +15,8 @@
 
 #-----------------------------------------------------------------------------
 from hotspot_login_manager.libs import hlm_platform
-hlm_platform.install(vars(), hlm_platform.hlmp_network)
+
+hlm_platform.install(vars(), hlm_platform.hlmp_wifi)
 
 
 #-----------------------------------------------------------------------------

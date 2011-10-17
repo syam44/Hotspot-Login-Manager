@@ -20,7 +20,7 @@ try:
     #
     import sys
     #
-    from hotspot_login_manager.libs import hlm_network
+    from hotspot_login_manager.libs import hlm_wifi
 
 except ImportError as err:
     print('Couldn\'t load module: {0}.'.format(err))
@@ -29,8 +29,8 @@ except ImportError as err:
 
 #-----------------------------------------------------------------------------
 def main():
-    print(_('All interfaces'), hlm_network.getInterfaces(wifiOnly = False))
-    wirelessIfaces = hlm_network.getInterfaces(wifiOnly = True)
+    print(_('All interfaces'), hlm_wifi.getNetworkInterfaces(wifiOnly = False))
+    wirelessIfaces = hlm_wifi.getNetworkInterfaces(wifiOnly = True)
     print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
     for iface in wirelessIfaces:
         print('    ', iface, '=', hlm_network.getSSID(iface))
