@@ -19,7 +19,7 @@ try:
     #
     import sys
     #
-    from hotspot_login_manager.libs import hlm_wifi
+    from hotspot_login_manager.libs import hlm_args
 
 except ImportError as err:
     print('Couldn\'t load module: {0}.'.format(err))
@@ -28,11 +28,34 @@ except ImportError as err:
 
 #-----------------------------------------------------------------------------
 def main():
-    print(_('All interfaces'), hlm_wifi.getNetworkInterfaces(wifiOnly = False))
-    wirelessIfaces = hlm_wifi.getNetworkInterfaces(wifiOnly = True)
-    print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
-    for iface in wirelessIfaces:
-        print('    ', iface, '=', hlm_network.getSSID(iface))
+    args = hlm_args.parse()
+
+    #
+    # Sample code below
+    #
+
+    # --daemon
+    if args.runDaemon:
+        from hotspot_login_manager.libs import hlm_wifi
+        #
+        print(_('All interfaces'), hlm_wifi.getNetworkInterfaces(wifiOnly = False))
+        wirelessIfaces = hlm_wifi.getNetworkInterfaces(wifiOnly = True)
+        print(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
+        for iface in wirelessIfaces:
+            print('    ', iface, '=', hlm_network.getSSID(iface))
+
+    # --notifier=kde4
+    elif args.notifierBackend != None:
+        import subprocess
+        import time
+        from hotspot_login_manager.libs import hlm_defaultpaths
+        #
+        iteration = 0
+        while True:
+            iteration += 1
+            message = _('Notification #{0}\nIt works!').format(iteration)
+            subprocess.Popen([hlm_defaultpaths.application() + '/hotspot_login_manager/notifiers/' + args.notifierBackend, message])
+            time.sleep(5)
 
     sys.exit(0)
 
