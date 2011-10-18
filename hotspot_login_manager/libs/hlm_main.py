@@ -13,6 +13,9 @@
 
 
 #-----------------------------------------------------------------------------
+# Do not import any HLM module before this one, translation services are needed everywhere!
+import hotspot_login_manager.libs.core.hlm_i18n
+#
 import sys
 #
 from hotspot_login_manager.libs import hlm_args

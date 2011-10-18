@@ -36,82 +36,19 @@ def parse():
     ''' Parse command-line arguments and perform basic sanity checks.
         Some arguments are handled directly by this function to avoid useless clutter outside of it.
     '''
-    #
-    # FIXME: currently, notification backends are systematically checked on program startup
-    #        this has no impact right now because there's only one, but as the list grows it could
-    #        become a startup performance problem
-    #        solution: multiple-pass arguments checking...
-    #            --help checks every notification backend to display the available ones to the end user
-    #            --notifier just checks the backend corresponding to the given argument (unless there is
-    #                       an error, then we also check all the backends to display a proper error message
-    #            every other option just does its job, ignoring the notification backends
-    #
-    parser = OptionParser(usage = _('Usage: %prog OPTIONS'), add_help_option = False)
-    # Map Python english error messages to custom i18n messages
-    parser.error = _i18nErrorMapper
-    # Set default options
-    parser.set_defaults(displayHelp = False,
-                        displayVersion = False,
-                        # System daemon
-                        runDaemon = False,
-                        daemonConfig = None,
-                        daemonLogLevel = None,
-                        # User notifications
-                        runReauth = False,
-                        notifierBackend = None,
-                        runStatus = False
-                        )
-
-    group = OptionGroup(parser, _('General information'))
-    group.add_option('-h', '--help',
-                     help = _('Display this help message and exit.'),
-                     dest = 'displayHelp', action = 'store_true')
-    group.add_option('-v', '--version',
-                     help = _('Display the program version and exit.'),
-                     dest = 'displayVersion', action = 'store_true')
-    parser.add_option_group(group)
-
-    group = OptionGroup(parser, _('System daemon options'))
-    group.add_option('-d', '--daemon',
-                     help = _('Run as a system daemon (unique instance).'),
-                     dest = 'runDaemon', action = 'store_true')
-    group.add_option('--config', metavar = _('FILE'),
-                     help = _('Use the configuration file FILE. If this option is omitted {0} will be used.')
-                            .format(_quoted([hlm_paths.defaultConfigFile()])),
-                     dest = 'daemonConfig')
-    group.add_option('--log', metavar = _('LEVEL'),
-                     help = _('Determine the maximum verbosity LEVEL of the log messages. In increasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
-                            .format(_quoted(hlm_log.levels), _quoted([hlm_log.defaultLevel]), _quoted([hlm_log.facility])),
-                     dest = 'daemonLogLevel', choices = hlm_log.levels)
-    parser.add_option_group(group)
-
-    group = OptionGroup(parser, _('Unpriviledged user options'))
-
-    availableNotifierBackends = hlm_backends.getAvailableBackends()
-    if availableNotifierBackends != []:
-        notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(_quoted(availableNotifierBackends))
-    else:
-        notifierBackendsMessage = _('There isn\'t any available notification backend for your current user session. You cannot run a notifier daemon.')
-
-    group.add_option('-r', '--reauth',
-                     help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
-                     dest = 'runReauth', action = 'store_true')
-    group.add_option('-s', '--status',
-                     help = _('Display the current status of the system daemon and exit.'),
-                     dest = 'runStatus', action = 'store_true')
-    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
-                     help = _('Run in the background and display end-user notifications using the BACKEND method.') + ' ' + notifierBackendsMessage,
-                     choices = availableNotifierBackends, dest = 'notifierBackend')
-    parser.add_option_group(group)
-
-    (options, args) = parser.parse_args()
+    # Double-pass arguments checking to reduce performance hit when many notification backends are available
+    #   --notifier option requires double-pass if the provided backend is not available
+    #   --help always requires double-pass in order to display the available backends
+    (parser, options, args) = _parseArgs(ignoreNotifier = True)
+    if ((options.notifierBackend != None) and not hlm_backends.isAvailableBackend(options.notifierBackend)) or (options.displayHelp == True):
+        (parser, options, args) = _parseArgs(ignoreNotifier = False)
 
     # Handle --help and --version and exit immediately
     if options.displayHelp or options.displayVersion:
         print('Hotspot Login Manager {0}'.format(hlm_application.getVersion()))
         if options.displayHelp:
-          print()
-          parser.print_help()
+            print()
+            parser.print_help()
         sys.exit(0)
     # We don't need the parser anymore
     parser.destroy()
@@ -143,6 +80,79 @@ def parse():
 
 
 #-----------------------------------------------------------------------------
+def _parseArgs(ignoreNotifier):
+    ''' Parse the command-line arguments, optionally ignoring the notification backend choices.
+    '''
+    parser = OptionParser(usage = _('Usage: %prog OPTIONS'), add_help_option = False)
+    # Map Python english error messages to custom i18n messages
+    parser.error = _i18nErrorMapper
+    # Set default options
+    parser.set_defaults(displayHelp = False,
+                        displayVersion = False,
+                        # User notifications
+                        runReauth = False,
+                        notifierBackend = None,
+                        runStatus = False,
+                        # System daemon
+                        runDaemon = False,
+                        daemonConfig = None,
+                        daemonLogLevel = None,
+                       )
+
+    group = OptionGroup(parser, _('General information'))
+    group.add_option('-h', '--help',
+                     help = _('Display this help message and exit.'),
+                     dest = 'displayHelp', action = 'store_true')
+    group.add_option('-v', '--version',
+                     help = _('Display the program version and exit.'),
+                     dest = 'displayVersion', action = 'store_true')
+    parser.add_option_group(group)
+
+    group = OptionGroup(parser, _('User commands'))
+
+    # Double-pass arguments checking to reduce performance hit when many notification backends are available
+    # We don't want to check every single backend if the user doesn't ask that
+    if ignoreNotifier:
+        availableNotifierBackends = None
+        notifierBackendsMessage = ''
+    else:
+        availableNotifierBackends = hlm_backends.getAvailableBackends()
+        if availableNotifierBackends != []:
+            notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(_quoted(availableNotifierBackends))
+        else:
+            notifierBackendsMessage = _('There isn\'t any available notification backend for your current user session. You cannot run a notifier daemon.')
+
+    group.add_option('-r', '--reauth',
+                     help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
+                     dest = 'runReauth', action = 'store_true')
+    group.add_option('-s', '--status',
+                     help = _('Display the current status of the system daemon and exit.'),
+                     dest = 'runStatus', action = 'store_true')
+    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
+                     help = _('Run in the background and display end-user notifications using the BACKEND method.') + ' ' + notifierBackendsMessage,
+                     choices = availableNotifierBackends, dest = 'notifierBackend')
+    parser.add_option_group(group)
+
+    group = OptionGroup(parser, _('System daemon options'))
+    group.add_option('-d', '--daemon',
+                     help = _('Run as a system daemon (unique instance).'),
+                     dest = 'runDaemon', action = 'store_true')
+    group.add_option('--config', metavar = _('FILE'),
+                     help = _('Use the configuration file FILE. If this option is omitted {0} will be used.')
+                            .format(_quoted([hlm_paths.defaultConfigFile()])),
+                     dest = 'daemonConfig')
+    availableLogLevels = list(hlm_log.levels.keys())
+    group.add_option('--log', metavar = _('LEVEL'),
+                     help = _('Determine the maximum verbosity LEVEL of the log messages. In increasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
+                            .format(_quoted(availableLogLevels), _quoted([hlm_log.defaultLevel]), _quoted([hlm_log.facilityName])),
+                     dest = 'daemonLogLevel', choices = availableLogLevels)
+    parser.add_option_group(group)
+
+    (options, args) = parser.parse_args()
+    return (parser, options, args)
+
+
+#-----------------------------------------------------------------------------
 def _i18nErrorMapper(error):
     ''' Map Python english error messages to i18n messages.
     '''
@@ -167,8 +177,9 @@ def _i18nErrorMapper(error):
         if match != None:
             optionName = _quoted([match.group(1)])
             invalidChoice = _quoted([match.group(2)])
-            if match.group(4) != None:
-                possibleChoices = _quoted(match.group(4).split('\', \''))
+            validChoices = match.group(4)
+            if validChoices != None:
+                possibleChoices = _quoted(validChoices.split('\', \''))
                 possibleChoices = _('Valid arguments are: {0}.').format(possibleChoices)
             else:
                 possibleChoices = _('There isn\'t any possible valid argument. This option is unusable.')

@@ -39,7 +39,7 @@ class NotificationBackend(object):
     '''
     def __init__(self, backend):
         # Check that the backend is actually supported.
-        if backend in getAvailableBackends():
+        if isAvailableBackend(backend):
             self.__backend = _backendFullPath(backend)
         else:
             self.__backend = None

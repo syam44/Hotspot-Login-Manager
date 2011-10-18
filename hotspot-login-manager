@@ -20,9 +20,6 @@
 #-----------------------------------------------------------------------------
 import sys # This must be imported first to ensure sys.exit() works
 try:
-    # Do not import any HLM module before this one, translation services are needed everywhere!
-    import hotspot_login_manager.libs.core.hlm_i18n
-    #
     from hotspot_login_manager.libs import hlm_main
 
 except ImportError as err:

@@ -22,7 +22,12 @@ import syslog
 #
 # Available verbosity levels
 #
-levels = [ 'error', 'warning', 'info', 'debug' ]
+levels = { 'error'   : syslog.LOG_ERR,
+           'warning' : syslog.LOG_WARNING,
+           'info'    : syslog.LOG_INFO,
+           'debug'   : syslog.LOG_DEBUG,
+         }
+
 #
 # Default verbosity level
 #
@@ -30,7 +35,7 @@ defaultLevel = 'info'
 #
 # Syslog's facility friendly name
 #
-facility = 'daemon'
+facilityName = 'daemon'
 
 
 #-----------------------------------------------------------------------------
@@ -84,13 +89,10 @@ class Logger(object):
 def _translateLogLevel(level):
     ''' Convenience function to translate hlm_log log levels to syslog values.
     '''
-    if level == 'error':
-        return syslog.LOG_ERR
-    if level == 'warning':
-        return syslog.LOG_WARNING
-    if level == 'debug':
-        return syslog.LOG_DEBUG
-    return syslog.LOG_INFO
+    try:
+        return levels[level]
+    except KeyError:
+        return levels[defaultLevel]
 
 
 #-----------------------------------------------------------------------------
