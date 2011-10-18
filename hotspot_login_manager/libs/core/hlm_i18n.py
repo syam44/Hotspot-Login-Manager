@@ -53,8 +53,8 @@ _localeDir = None
 #       _N() is the plural string translator (mapping depends on the counter, cf. gettext.lngettext).
 #
 _builtinVars = vars()['__builtins__']
-_builtinVars['_'] = gettext.lgettext
-_builtinVars['_N'] = gettext.lngettext
+_builtinVars['_'] = gettext.gettext
+_builtinVars['_N'] = gettext.ngettext
 _builtinVars = None
 
 

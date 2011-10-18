@@ -8,12 +8,11 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Spread version from root "VERSION" file to the whole codebase
+# Description: Regenerate hlm_version_autogen.py
 #
 set -e
-cd "$(dirname "$(readlink -f "$0")")/.."
 
-VERSION_PY="./hotspot_login_manager/libs/core/hlm_version_autogen.py"
+VERSION_PY="$1"
 
 cat >"$VERSION_PY.tmp" <<EOF
 # -*- coding:utf-8 -*-

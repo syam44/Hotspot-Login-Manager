@@ -9,9 +9,6 @@
 #
 # Description: makefile for easier command-line interaction
 #
-# FIXME: declare generators/generated dependencies so we can get
-#        rid of useless .PHONY directives and get a cleaner make chain.
-#
 
 
 #
@@ -20,39 +17,61 @@
 .PHONY: usage
 usage:
 	@echo "Targets:"
+	@echo "    all         Make all project files: version, i18n-pot, i18n-mo"
 	@echo "    clean       Clean intermediary files."
-	@echo "    i18n-pot    Generate messages.pot translation model."
-	@echo "    i18n-mo     Generate .mo catalog files from existing .po translated files."
+	@echo
+	@echo "    i18n-mo     Generate .mo catalog files (program translations) from existing .po translated files."
+	@echo "    i18n-pot    Generate .pot translation model."
 	@echo "    version     Spread version information from root \"VERSION\" file to the whole codebase."
 
 
 #
-# I18N: Generate messages.pot translation model
+# Make all project files
 #
-.PHONY: i18n-pot
-i18n-pot:
-	devtools/make-i18n-pot
+all: version i18n-pot i18n-mo
+
+
+#
+# Clean intermediary files
+#
+.PHONY: clean clean-mo clean-pyc
+clean: clean-pyc clean-mo
+
+clean-mo:
+	find ./hotspot_login_manager/lang -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0 rm -r 2>/dev/null || true
+
+clean-pyc:
+	find ./ -type f -name '*.pyc' -print0 | xargs -0 rm 2>/dev/null || true
 
 
 #
 # I18N: Generate .mo catalog files from existing .po translated files
 #
 .PHONY: i18n-mo
-i18n-mo:
-	devtools/make-i18n-mo
+i18n-mo: $(shell find ./hotspot_login_manager/lang/ -type f -name '*.po' | sed 's@\.po$$@/LC_MESSAGES/hotspot-login-manager.mo@g')
+
+./hotspot_login_manager/lang/%/LC_MESSAGES/hotspot-login-manager.mo: ./hotspot_login_manager/lang/%.po
+	mkdir -p $(shell dirname $@)
+	msgfmt --strict --check -o - $^ > $@.tmp
+	mv $@.tmp $@
 
 
 #
-# Clean intermediary files
+# I18N: Generate messages.pot translation model
 #
-.PHONY: clean
-clean:
-	devtools/make-clean
+.PHONY: i18n-pot
+i18n-pot: ./hotspot_login_manager/lang/hotspot-login-manager.pot
+
+./hotspot_login_manager/lang/hotspot-login-manager.pot: $(shell find ./ -type f -name '*.py')
+	mkdir -p ./hotspot_login_manager/lang
+	devtools/make-i18n-pot $@ $^
 
 
 #
 # Spread version information from root "VERSION" file to the whole codebase
 #
 .PHONY: version
-version:
-	devtools/make-version
+version: ./hotspot_login_manager/libs/core/hlm_version_autogen.py
+
+./hotspot_login_manager/libs/core/hlm_version_autogen.py: VERSION
+	devtools/make-version-py $@

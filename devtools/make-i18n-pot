@@ -10,14 +10,14 @@
 #
 # Description: I18N: Generate messages.pot translation model
 #
+set -e
 
-cd "$(dirname "$(readlink -f "$0")")/.."
-
-# Make sure the lang directory exists.
-mkdir -p ./hotspot_login_manager/lang
+MESSAGES_POT="$1"
+shift
+PY_FILES="$@"
 
 # .pot header
-cat >./hotspot_login_manager/lang/hotspot-login-manager.pot <<EOF
+cat >"$MESSAGES_POT.tmp" <<EOF
 #
 # hotspot-login-manager
 # https://github.com/syam44/Hotspot-Login-Manager
@@ -40,4 +40,20 @@ msgstr ""
 EOF
 
 # Extract strings, remove default header (we already have one), and append to existing header
-find ./ -type f -name '*.py' -print0 | xargs -0 ./devtools/pygettext/pygettext3.1-patched --output=- ./hotspot-login-manager | tail -n +17 >>./hotspot_login_manager/lang/hotspot-login-manager.pot
+./devtools/pygettext/pygettext3.1-patched --output=- ./hotspot-login-manager $PY_FILES | tail -n +17 >>"$MESSAGES_POT.tmp"
+
+# Do not replace the .pot file if there are no changes (avoids bumping the POT-Creation-Date field, which helps versioning)
+filter_pot()
+{
+    cat "$1" 2>/dev/null | sed 's@^"POT-Creation-Date: [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}+[A-Z]\+\\n"$@"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"@g'
+}
+CURRENT_POT="$(filter_pot "$MESSAGES_POT")"
+NEW_POT="$(filter_pot "$MESSAGES_POT.tmp")"
+
+if [ "$CURRENT_POT" = "$NEW_POT" ]; then
+    echo "No changes to .pot file."
+    rm "$MESSAGES_POT.tmp"
+    touch "$MESSAGES_POT"
+else
+    mv "$MESSAGES_POT.tmp" "$MESSAGES_POT"
+fi

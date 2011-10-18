@@ -8,7 +8,8 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Syslog wrapper.
+# Description: Log facility with capped logging levels.
+#              Uses syslog under the hood.
 #
 
 
@@ -41,7 +42,8 @@ _syslogFacility = syslog.LOG_DAEMON
 
 #-----------------------------------------------------------------------------
 class Logger(object):
-    ''' Syslog convenience class with capped logging levels.
+    ''' Log facility with capped logging levels.
+        There should be only one instance of this class in the whole program.
     '''
     def __init__(self, level):
         self.__priority = _translateLogLevel(level)
