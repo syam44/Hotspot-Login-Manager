@@ -13,6 +13,7 @@
 
 
 #-----------------------------------------------------------------------------
+import atexit
 import syslog
 
 
@@ -40,15 +41,12 @@ _syslogFacility = syslog.LOG_DAEMON
 
 #-----------------------------------------------------------------------------
 class Logger(object):
-    ''' Syslog wrapper object with capped logging levels.
+    ''' Syslog convenience class with capped logging levels.
     '''
     def __init__(self, level):
         self.__priority = _translateLogLevel(level)
         syslog.openlog('Hotspot Login Manager', syslog.LOG_PID + syslog.LOG_NDELAY, _syslogFacility)
-
-
-    def close(self):
-        syslog.close()
+        atexit.register(syslog.close)
 
 
     def isAllowed(level):
