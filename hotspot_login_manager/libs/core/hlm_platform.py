@@ -54,7 +54,7 @@ _platformPluginsPath = hlm_application.getPath() + '/libs/platforms/' + _platfor
 
 #-----------------------------------------------------------------------------
 def install(wrapperVars, moduleName):
-    ''' Import moduleName and install  into the wrapper module every public
+    ''' Import moduleName and install into the wrapper module every public
         variable/function/class it defines.
         Modules imported by moduleName are not installed into the wrapper.
 
@@ -64,7 +64,7 @@ def install(wrapperVars, moduleName):
             from hotspot_login_manager.libs.core import hlm_platform
             hlm_platform.install(vars(), 'module')
     '''
-    moduleObject = hlm_plugin.load('hlmp_' + moduleName, _platformPluginsPath)
+    moduleObject = hlm_plugin.load('hlmp_' + moduleName, _platformPluginsPath, 'platform')
     moduleVars = vars(moduleObject)
     for varName in moduleVars.keys():
         varObject = moduleVars[varName]

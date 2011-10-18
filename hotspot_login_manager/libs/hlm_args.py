@@ -102,7 +102,7 @@ def parse():
                      help = _('Display the current status of the system daemon and exit.'),
                      dest = 'runStatus', action = 'store_true')
     group.add_option('-n', '--notifier', metavar = _('BACKEND'),
-                     help = _('Run as a user daemon that displays HLM notifications to the end-user using the BACKEND method.') + ' ' + notifierBackendsMessage,
+                     help = _('Run as a daemon that displays end-user HLM notifications using the BACKEND method.') + ' ' + notifierBackendsMessage,
                      choices = availableNotifierBackends, dest = 'notifierBackend')
     parser.add_option_group(group)
 
