@@ -20,7 +20,7 @@ import sys
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_paths
 from hotspot_login_manager.libs.daemon import hlm_log
-from hotspot_login_manager.libs import hlm_notifier
+from hotspot_login_manager.libs.notifier import hlm_backends
 
 
 #-----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ def parse():
 
     group = OptionGroup(parser, _('Unpriviledged user options'))
 
-    availableNotifierBackends = hlm_notifier.getAvailableBackends()
+    availableNotifierBackends = hlm_backends.getAvailableBackends()
     if availableNotifierBackends != []:
         notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(_quoted(availableNotifierBackends))
     else:

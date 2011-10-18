@@ -28,7 +28,7 @@ def main():
 
     # --daemon
     if args.runDaemon:
-        from hotspot_login_manager.libs.network import hlm_wireless
+        from hotspot_login_manager.libs.daemon import hlm_wireless
         #
         print(_('All interfaces'), hlm_wireless.getNetworkInterfaces(wirelessOnly = False))
         wirelessIfaces = hlm_wireless.getNetworkInterfaces(wirelessOnly = True)
@@ -39,9 +39,9 @@ def main():
     # --notifier=kde4
     if args.notifierBackend != None:
         import time
-        from hotspot_login_manager.libs import hlm_notifier
+        from hotspot_login_manager.libs.notifier import hlm_backends
         #
-        notifier = hlm_notifier.NotificationBackend(args.notifierBackend)
+        notifier = hlm_backends.NotificationBackend(args.notifierBackend)
         iteration = 0
         while True:
             iteration += 1
