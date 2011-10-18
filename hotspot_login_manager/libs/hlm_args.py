@@ -35,6 +35,16 @@ def parse():
     ''' Parse command-line arguments and perform basic sanity checks.
         Some arguments are handled directly by this function to avoid useless clutter outside of it.
     '''
+    #
+    # FIXME: currently, notification backends are systematically checked on program startup
+    #        this has no impact right now because there's only one, but as the list grows it could
+    #        become a startup performance problem
+    #        solution: multiple-pass arguments checking...
+    #            --help checks every notification backend to display the available ones to the end user
+    #            --notifier just checks the backend corresponding to the given argument (unless there is
+    #                       an error, then we also check all the backends to display a proper error message
+    #            every other option just does its job, ignoring the notification backends
+    #
     parser = OptionParser(usage = _('Usage: %prog OPTIONS'), add_help_option = False)
     # Map Python english error messages to custom i18n messages
     parser.error = _i18nErrorMapper
@@ -88,12 +98,12 @@ def parse():
     group.add_option('-r', '--reauth',
                      help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
                      dest = 'runReauth', action = 'store_true')
-    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
-                     help = _('Run as a user daemon that forwards the notifications from the system daemon to the end-user using the BACKEND method.') + ' ' + notifierBackendsMessage,
-                     choices = availableNotifierBackends, dest = 'notifierBackend')
     group.add_option('-s', '--status',
-                     help = _('Print the current status of the system daemon and exit.'),
+                     help = _('Display the current status of the system daemon and exit.'),
                      dest = 'runStatus', action = 'store_true')
+    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
+                     help = _('Run as a user daemon that displays HLM notifications to the end-user using the BACKEND method.') + ' ' + notifierBackendsMessage,
+                     choices = availableNotifierBackends, dest = 'notifierBackend')
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
@@ -116,8 +126,8 @@ def parse():
     runNotifier = (options.notifierBackend != None)
 
     # Mutually exclusive options
-    mainCommands = _quoted(['--daemon', '--reauth', '--notifier', '--status'])
-    mainCommandsCount = sum([options.runDaemon, options.runReauth, runNotifier, options.runStatus])
+    mainCommands = _quoted(['--daemon', '--reauth', '--status', '--notifier'])
+    mainCommandsCount = sum([options.runDaemon, options.runReauth, options.runStatus, runNotifier])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:

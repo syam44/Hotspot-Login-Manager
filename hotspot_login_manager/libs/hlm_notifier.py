@@ -14,6 +14,7 @@
 
 #-----------------------------------------------------------------------------
 import os
+import re
 import subprocess
 #
 from hotspot_login_manager.libs.core import hlm_application
@@ -24,6 +25,12 @@ from hotspot_login_manager.libs.core import hlm_application
 # Filesystem path for the notification backends
 #
 _notifierBackendsPath = hlm_application.getPath() + '/notifiers'
+
+
+#
+# Pre-compiled regular expression.
+#
+_backendNameRegex = re.compile('^[a-zA-Z0-9_.-]+$')
 
 
 #-----------------------------------------------------------------------------
@@ -60,7 +67,7 @@ def getAvailableBackends():
         try:
             entries = os.listdir(_notifierBackendsPath + '/')
             for backend in entries:
-                if _isValidBackend(backend):
+                if isAvailableBackend(backend):
                     getAvailableBackends.__cache.append(backend)
         except:
             pass
@@ -74,25 +81,26 @@ getAvailableBackends.__cache = None
 
 
 #-----------------------------------------------------------------------------
-def _backendFullPath(backend):
-    ''' Return the full path of a specific notification backend.
-    '''
-    return os.path.realpath(_notifierBackendsPath + '/' + backend)
-
-
-#-----------------------------------------------------------------------------
-def _isValidBackend(backend):
+def isAvailableBackend(backend):
     ''' Determine whether a particular notification backend is callable from
         the current user session context.
     '''
     try:
-        backendPath = _backendFullPath(backend)
-        if os.path.isfile(backendPath):
-            subprocess.check_call([backendPath])
-            return True
+        if _backendNameRegex.search(backend) != None:
+            backendPath = _backendFullPath(backend)
+            if os.path.isfile(backendPath):
+                subprocess.check_call([backendPath])
+                return True
     except:
         pass
     return False
+
+
+#-----------------------------------------------------------------------------
+def _backendFullPath(backend):
+    ''' Return the full path of a specific notification backend.
+    '''
+    return os.path.realpath(_notifierBackendsPath + '/' + backend)
 
 
 #-----------------------------------------------------------------------------
