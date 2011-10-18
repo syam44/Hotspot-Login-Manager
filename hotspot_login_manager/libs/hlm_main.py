@@ -16,8 +16,6 @@
 import sys
 #
 from hotspot_login_manager.libs import hlm_args
-from hotspot_login_manager.libs.core import hlm_application
-from hotspot_login_manager.libs.core import hlm_plugin
 
 
 #-----------------------------------------------------------------------------

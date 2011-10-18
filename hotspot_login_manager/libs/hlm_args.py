@@ -19,6 +19,7 @@ import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_paths
+from hotspot_login_manager.libs.daemon import hlm_log
 from hotspot_login_manager.libs import hlm_notifier
 
 
@@ -60,8 +61,6 @@ def parse():
                         notifierBackend = None,
                         runStatus = False
                         )
-    # Use a separate variable for the default log level so we can detect usage of the --log option
-    defaultDaemonLogLevel = 'info'
 
     group = OptionGroup(parser, _('General information'))
     group.add_option('-h', '--help',
@@ -80,11 +79,10 @@ def parse():
                      help = _('Use the configuration file FILE. If this option is omitted {0} will be used.')
                             .format(_quoted([hlm_paths.defaultConfigFile()])),
                      dest = 'daemonConfig')
-    availableLoggingLevels = ['error', 'info', 'debug']
     group.add_option('--log', metavar = _('LEVEL'),
-                     help = _('Determine the verbosity LEVEL of the log messages. From least to most verbose, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
-                            .format(_quoted(availableLoggingLevels), _quoted([defaultDaemonLogLevel]), _quoted(['daemon'])),
-                     dest = 'daemonLogLevel', choices = availableLoggingLevels)
+                     help = _('Determine the maximum verbosity LEVEL of the log messages. In increasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
+                            .format(_quoted(hlm_log.levels), _quoted([hlm_log.defaultLevel]), _quoted([hlm_log.facility])),
+                     dest = 'daemonLogLevel', choices = hlm_log.levels)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, _('Unpriviledged user options'))
@@ -139,7 +137,7 @@ def parse():
             optionName = '--log'
         exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(_quoted([optionName]), _quoted(['--daemon'])))
     if options.runDaemon and (options.daemonLogLevel == None):
-        options.daemonLogLevel = defaultDaemonLogLevel
+        options.daemonLogLevel = hlm_log.defaultLevel
 
     return options
 
