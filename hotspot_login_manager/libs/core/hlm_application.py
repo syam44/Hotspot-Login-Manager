@@ -28,6 +28,8 @@ from hotspot_login_manager.libs.core import hlm_version_autogen
 #
 _applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../..')
 
+
+#-----------------------------------------------------------------------------
 def getPath():
     ''' Return the root path of the application.
         Note that the hotspot_login_manager directory is considered to be the root path.

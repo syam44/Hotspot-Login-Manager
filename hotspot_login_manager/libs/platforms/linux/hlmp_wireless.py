@@ -89,6 +89,7 @@ def getSSID(iface):
 class _IwPoint(object):
     ''' Store iw_point data.
     '''
+    #-----------------------------------------------------------------------------
     def __init__(self, data, flags = 0):
         self.result = array.array('c', data)
         (caddr_t, length) = self.result.buffer_info()

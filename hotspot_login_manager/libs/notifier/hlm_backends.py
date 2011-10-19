@@ -37,6 +37,7 @@ _backendNameRegex = re.compile('^[a-zA-Z0-9_.-]+$')
 class NotificationBackend(object):
     ''' Notification backend wrapper.
     '''
+    #-----------------------------------------------------------------------------
     def __init__(self, backend):
         # Check that the backend is actually supported.
         if isAvailableBackend(backend):
@@ -45,6 +46,7 @@ class NotificationBackend(object):
             self.__backend = None
 
 
+    #-----------------------------------------------------------------------------
     def notify(self, message):
         ''' Send a notification message to the user through the backend program.
             Return a boolean indicating success.
@@ -75,7 +77,7 @@ def getAvailableBackends():
     return getAvailableBackends.__cache
 
 #
-# Use function attribute to cache the results
+# Cached results
 #
 getAvailableBackends.__cache = None
 
@@ -89,7 +91,7 @@ def isAvailableBackend(backend):
         if _backendNameRegex.search(backend) != None:
             backendPath = _backendFullPath(backend)
             if os.path.isfile(backendPath):
-                subprocess.check_call([backendPath])
+                subprocess.check_output([backendPath])
                 return True
     except:
         pass

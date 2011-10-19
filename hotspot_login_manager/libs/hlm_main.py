@@ -18,13 +18,12 @@ import hotspot_login_manager.libs.core.hlm_i18n
 #
 import sys
 #
-from hotspot_login_manager.libs import hlm_args
+from hotspot_login_manager.libs.core import hlm_args
 
 
 #-----------------------------------------------------------------------------
 def main():
-    args = hlm_args.parse()
-
+    args = hlm_args.args()
     #
     # Sample code below
     #
@@ -42,8 +41,10 @@ def main():
     # --notifier=kde4
     if args.notifierBackend != None:
         import time
+        from hotspot_login_manager.libs.core import hlm_pidfile
         from hotspot_login_manager.libs.notifier import hlm_backends
         #
+        pid = hlm_pidfile.PIDFile('/tmp/hotspot-login-manager.pid')
         notifier = hlm_backends.NotificationBackend(args.notifierBackend)
         iteration = 0
         while True:

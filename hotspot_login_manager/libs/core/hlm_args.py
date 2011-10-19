@@ -24,24 +24,40 @@ from hotspot_login_manager.libs.notifier import hlm_backends
 
 
 #-----------------------------------------------------------------------------
+def args():
+    ''' Parse command-line arguments and perform basic sanity checks.
+        Some arguments are handled directly by this function to avoid useless clutter outside of it.
+
+        This function's results are cached so calling it several times incurs no penalty / side-effects.
+    '''
+    if args.__cache == None:
+        args.__cache = _parse()
+    return args.__cache
+
+#
+# Cached results
+#
+args.__cache = None
+
+
+#-----------------------------------------------------------------------------
 def exitWithError(error):
-    ''' Print the program version and error string to stderr and exit.
+    ''' Print an error string to stderr and exit.
     '''
     print(error, file = sys.stderr)
     sys.exit(2) # traditional Unix exit status for command-line errors
 
 
 #-----------------------------------------------------------------------------
-def parse():
-    ''' Parse command-line arguments and perform basic sanity checks.
-        Some arguments are handled directly by this function to avoid useless clutter outside of it.
+def _parse():
+    ''' Perform the actual arguments parsing.
     '''
     # Double-pass arguments checking to reduce performance hit when many notification backends are available
     #   --notifier option requires double-pass if the provided backend is not available
     #   --help always requires double-pass in order to display the available backends
-    (parser, options, args) = _parseArgs(ignoreNotifier = True)
+    (parser, options, strayArgs) = _parseArgs(ignoreNotifier = True)
     if ((options.notifierBackend != None) and not hlm_backends.isAvailableBackend(options.notifierBackend)) or (options.displayHelp == True):
-        (parser, options, args) = _parseArgs(ignoreNotifier = False)
+        (parser, options, strayArgs) = _parseArgs(ignoreNotifier = False)
 
     # Handle --help and --version and exit immediately
     if options.displayHelp or options.displayVersion:
@@ -54,8 +70,8 @@ def parse():
     parser.destroy()
 
     # Do not accept additional options
-    if args != []:
-        exitWithError(_N('Unknown option:', 'Unknown options:', len(args)) + ' ' + ' '.join(args))
+    if strayArgs != []:
+        exitWithError(_N('Unknown option:', 'Unknown options:', len(strayArgs)) + ' ' + ' '.join(strayArgs))
 
     # Boolean runNotifier value to handle sanity checks more easily
     runNotifier = (options.notifierBackend != None)
@@ -148,8 +164,8 @@ def _parseArgs(ignoreNotifier):
                      dest = 'daemonLogLevel', choices = availableLogLevels)
     parser.add_option_group(group)
 
-    (options, args) = parser.parse_args()
-    return (parser, options, args)
+    (options, strayArgs) = parser.parse_args()
+    return (parser, options, strayArgs)
 
 
 #-----------------------------------------------------------------------------
