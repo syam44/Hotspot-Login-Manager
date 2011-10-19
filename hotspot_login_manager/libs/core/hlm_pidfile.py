@@ -78,12 +78,13 @@ def _tryCreateFile(path, raiseError):
 def _deleteIfStaleFile(path):
     ''' Delete the PID file in case it doesn't belong to us anymore.
 
-        NOTE: we don't try to protect against malicious programs that squat our
-              PID file, we are only concerned about stale locks that remain behind
-              after eg. a SIGKILL.
-
         In order to detect this, every daemon has to use a normalized command-line
         (which is ensured by core/hlm_daemonize).
+
+        NOTE: we don't try to protect against malicious programs that actively
+              try to DoS us by tricking us into thinking we're already running,
+              we are only concerned about stale locks that remain behind after
+              an unclean shutdown, eg. a SIGKILL.
     '''
     try:
         pid = readPID(path)

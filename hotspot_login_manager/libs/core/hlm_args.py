@@ -55,9 +55,9 @@ def _parse():
     # Double-pass arguments checking to reduce performance hit when many notification backends are available
     #   --notifier option requires double-pass if the provided backend is not available
     #   --help always requires double-pass in order to display the available backends
-    (parser, options, strayArgs) = _parseArgs(ignoreNotifier = True)
-    if ((options.notifierBackend != None) and not hlm_backends.isAvailableBackend(options.notifierBackend)) or (options.displayHelp == True):
-        (parser, options, strayArgs) = _parseArgs(ignoreNotifier = False)
+    (parser, options) = _parseArgs(ignoreNotifier = True)
+    if (options.displayHelp == True) or (options.runNotifier and (not hlm_backends.isAvailableBackend(options.notifierBackend))):
+        (parser, options) = _parseArgs(ignoreNotifier = False)
 
     # Handle --help and --version and exit immediately
     if options.displayHelp or options.displayVersion:
@@ -69,16 +69,14 @@ def _parse():
     # We don't need the parser anymore
     parser.destroy()
 
-    # Do not accept additional options
-    if strayArgs != []:
-        exitWithError(_N('Unknown option:', 'Unknown options:', len(strayArgs)) + ' ' + ' '.join(strayArgs))
-
-    # Boolean runNotifier value to handle sanity checks more easily
-    runNotifier = (options.notifierBackend != None)
+    # Do not accept additional options except a stray ':' to avoid infinite recursion during command-line canonicalization
+    # (cf. core/hlm_daemonize, core/hlm_psargs)
+    if (options.strayArgs != []) and (options.strayArgs != [':']):
+        exitWithError(_N('Unknown option:', 'Unknown options:', len(options.strayArgs)) + ' ' + ' '.join(options.strayArgs))
 
     # Mutually exclusive options
     mainCommands = _quoted(['--daemon', '--reauth', '--status', '--notifier'])
-    mainCommandsCount = sum([options.runDaemon, options.runReauth, options.runStatus, runNotifier])
+    mainCommandsCount = sum([options.runDaemon, options.runReauth, options.runStatus, options.runNotifier])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
@@ -89,8 +87,13 @@ def _parse():
         elif options.daemonLogLevel != None:
             optionName = '--log'
         exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(_quoted([optionName]), _quoted(['--daemon'])))
-    if options.runDaemon and (options.daemonLogLevel == None):
-        options.daemonLogLevel = hlm_log.defaultLevel
+
+    # Apply default values
+    if options.runDaemon:
+        if options.daemonConfig == None:
+            options.daemonConfig = hlm_paths.defaultConfigFile()
+        if options.daemonLogLevel == None:
+            options.daemonLogLevel = hlm_log.defaultLevel
 
     return options
 
@@ -107,8 +110,9 @@ def _parseArgs(ignoreNotifier):
                         displayVersion = False,
                         # User notifications
                         runReauth = False,
-                        notifierBackend = None,
                         runStatus = False,
+                        runNotifier = False,
+                        notifierBackend = None,
                         # System daemon
                         runDaemon = False,
                         daemonConfig = None,
@@ -165,7 +169,13 @@ def _parseArgs(ignoreNotifier):
     parser.add_option_group(group)
 
     (options, strayArgs) = parser.parse_args()
-    return (parser, options, strayArgs)
+
+    # Boolean runNotifier value to handle sanity checks more easily
+    options.runNotifier = (options.notifierBackend != None)
+    # Store stray args in the options
+    options.strayArgs = strayArgs
+
+    return (parser, options)
 
 
 #-----------------------------------------------------------------------------

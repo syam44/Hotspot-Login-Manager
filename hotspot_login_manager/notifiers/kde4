@@ -15,7 +15,7 @@
 
 if [ "$1" = "" ]; then
   # Check if we are running on KDE4
-  [ -x "$(which kdialog)" ] && [ "$KDE_FULL_SESSION" = "true" ] && [ "$KDE_SESSION_VERSION" = "4" ] && exit 0
+  [ ! -z "$DISPLAY" ] && [ -x "$(which kdialog)" ] && [ "$KDE_FULL_SESSION" = "true" ] && [ "$KDE_SESSION_VERSION" = "4" ] && exit 0
   exit 1
 else
   # Show the notification

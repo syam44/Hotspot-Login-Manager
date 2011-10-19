@@ -43,12 +43,51 @@ def _getProcessArguments(pid):
 
 
 #-----------------------------------------------------------------------------
+def _ourCanonicalCommandLinePrefix():
+    ''' Build and cache our own canonical command-line prefix.
+    '''
+    if _ourCanonicalCommandLinePrefix.__cache == None:
+        ccl = ''
+        # Get the interpreter name (shebang of main file)
+        try:
+            mainfile = open(hlm_application.getExecutableName(), 'r')
+            try:
+                shebang = mainfile.readline()
+                shebang = re.search('^#!(.*)$', shebang)
+                if shebang != None:
+                    ccl = shebang.group(1)
+            finally:
+                mainfile.close()
+        except:
+            pass
+        # Executable name
+        ccl += ' ' + hlm_application.getExecutableName() + ' : '
+        # Main daemon argument
+        args = hlm_args.args()
+        if args.runDaemon:
+            ccl += '--daemon'
+        elif args.runNotifier:
+            ccl += '--notifier'
+        else:
+            raise Exception('Unexpected')
+        # Store result in the cache
+        _ourCanonicalCommandLinePrefix.__cache = ccl
+
+    return _ourCanonicalCommandLinePrefix.__cache
+#
+# Cached results
+#
+_ourCanonicalCommandLinePrefix.__cache = None
+
+
+
+#-----------------------------------------------------------------------------
 def isCanonicalCommandLine(pid):
     ''' Check whether a specific process PID belongs to us and has been created
         using a canonical command-line.
 
-        core/hlm_daemonize ensures that a daemon is always called using its
-        canonical command-line.
+        core/hlm_daemonize ensures at fork time that a daemon is always called
+        using its canonical command-line.
 
         Return values:
             True  = the process is ours, using a canonical command-line
@@ -58,17 +97,7 @@ def isCanonicalCommandLine(pid):
     processArgs = _getProcessArguments(pid)
     if processArgs == None:
         return None
-
-    args = hlm_args.args()
-    canonicalAppPath = hlm_application.getPath() + '/hotspot-login-manager '
-    if args.runDaemon:
-        canonicalAppPath += '--daemon'
-    elif args.notifierBackend != None:
-        canonicalAppPath += '--notifier'
-    else:
-        return False
-
-    return processArgs.startswith(canonicalAppPath)
+    return processArgs.startswith(_ourCanonicalCommandLinePrefix())
 
 
 #-----------------------------------------------------------------------------
