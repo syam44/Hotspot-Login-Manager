@@ -46,7 +46,7 @@ def load(moduleName, searchPath, applicationDomain):
 
         # Check module name to guard against directory traversal and other annoyances.
         if _moduleNameRegex.search(moduleName) == None:
-            ImportError('Invalid module name {0}'.format(moduleName))
+            ImportError(_('Invalid plugin name {0}.').format(moduleName))
         searchPath = os.path.realpath(searchPath)
 
         # Try to find the relevant module. If an exception arises, let the caller handle it.

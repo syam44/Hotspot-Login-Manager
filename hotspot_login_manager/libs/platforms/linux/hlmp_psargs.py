@@ -50,14 +50,11 @@ def _ourCanonicalCommandLinePrefix():
         ccl = ''
         # Get the interpreter name (shebang of main file)
         try:
-            mainfile = open(hlm_application.getExecutableName(), 'r')
-            try:
+            with open(hlm_application.getExecutableName(), 'r') as mainfile:
                 shebang = mainfile.readline()
                 shebang = re.search('^#!(.*)$', shebang)
                 if shebang != None:
                     ccl = shebang.group(1)
-            finally:
-                mainfile.close()
         except:
             pass
         # Executable name
@@ -69,11 +66,12 @@ def _ourCanonicalCommandLinePrefix():
         elif args.runNotifier:
             ccl += '--notifier'
         else:
-            raise Exception('Unexpected')
+            raise Exception('[BUG] Unexpected combination of command-line arguments.')
         # Store result in the cache
         _ourCanonicalCommandLinePrefix.__cache = ccl
 
     return _ourCanonicalCommandLinePrefix.__cache
+
 #
 # Cached results
 #

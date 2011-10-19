@@ -8,10 +8,10 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: List network interfaces (either all or only wireless), and get the SSID of a wireless interface.
+# Description: List all active wireless network interfaces, and get the SSID of an interface.
 #              This is the Linux-specific implementation.
 #
-#              Most code in this module has been borrowed from python-wifi 0.5.0 by Roman Joost / Sean Robinson (which is also licensed under GPL).
+#              Most code in this module has been borrowed from python-wifi 0.5.0 by Roman Joost, Sean Robinson et al. (which is also licensed under the GPL, originally v2).
 #                  http://pypi.python.org/pypi/python-wifi/
 #                  http://pythonwifi.wikispot.org/
 #              We definitely don't need the full IW API, so depending on this library makes no sense, especially since it is still alpha and not yet packaged in Debian.
@@ -48,26 +48,21 @@ _networkInterfacesRegex = re.compile('^ *([a-z]{2,}[0-9]*):')
 
 
 #-----------------------------------------------------------------------------
-def getNetworkInterfaces(wirelessOnly = False):
-    ''' Return the list of all network interface names.
-        If wirelessOnly is True, only the connected wireless interfaces are returned.
+def getInterfaces():
+    ''' Return the list of all active (connected) wireless network interface.
 
-        Uses /prov/net/dev or /proc/net/wireless under the hood.
+        Uses /proc/net/wireless under the hood.
     '''
     ifaces = []
-
-    if wirelessOnly == True:
-        fd = open('/proc/net/wireless', 'r')
-    else:
-        fd = open('/proc/net/dev', 'r')
-
-    for line in fd:
-        try:
-            ifaces.append(_networkInterfacesRegex.search(line).group(1))
-        except AttributeError:
-            pass
-
-    fd.close()
+    try:
+        with open('/proc/net/wireless', 'r') as devices:
+            for device in devices:
+                try:
+                    ifaces.append(_networkInterfacesRegex.search(line).group(1))
+                except:
+                    pass
+    except:
+        pass
     return ifaces
 
 
@@ -78,11 +73,14 @@ def getSSID(iface):
 
         Uses IOCTLs under the hood.
     '''
-    if iface not in getNetworkInterfaces(True):
-        return None
-    iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
-    (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
-    return iwpoint.result.tostring().strip('\x00')
+    if iface in getNetworkInterfaces(True):
+        try:
+            iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
+            (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
+            return iwpoint.result.tostring().strip('\x00')
+        except:
+            pass
+    return None
 
 
 #-----------------------------------------------------------------------------

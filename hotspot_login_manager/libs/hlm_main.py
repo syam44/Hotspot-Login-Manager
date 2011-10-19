@@ -33,21 +33,18 @@ def main():
     if args.runDaemon:
         from hotspot_login_manager.libs.daemon import hlm_wireless
         #
-        debug(_('All interfaces'), hlm_wireless.getNetworkInterfaces(wirelessOnly = False))
-        wirelessIfaces = hlm_wireless.getNetworkInterfaces(wirelessOnly = True)
-        debug(_N('Wireless interface', 'Wireless interfaces', len(wirelessIfaces)), wirelessIfaces)
+        wirelessIfaces = hlm_wireless.getInterfaces()
+        debug('Wireless interfaces:', wirelessIfaces)
         for iface in wirelessIfaces:
-            debug('    ', iface, '=', hlm_wireless.getSSID(iface))
+            debug('   ', iface, '=', hlm_wireless.getSSID(iface))
 
     # --notifier=kde4
     if args.runNotifier:
         import time
         from hotspot_login_manager.libs.core import hlm_daemonize
-        from hotspot_login_manager.libs.core import hlm_pidfile
         from hotspot_login_manager.libs.notifier import hlm_backends
         #
-        hlm_daemonize.daemonize()
-        pid = hlm_pidfile.PIDFile('/tmp/hotspot-login-manager.pid')
+        hlm_daemonize.daemonize(pidFile = '/tmp/hotspot-login-manager.pid')
         notifier = hlm_backends.NotificationBackend(args.notifierBackend)
         iteration = 0
         while True:
