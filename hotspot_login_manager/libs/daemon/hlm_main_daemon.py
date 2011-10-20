@@ -29,7 +29,6 @@ def main(args):
     # TODO: makedir(hlm_paths.daemonRuntimePath())
     hlm_daemonize.daemonize(
                             umask = 0o644,
-                            logLevel = args.logLevel,
                             pidFile = '/tmp/hotspot-login-manager.pid', # hlm_paths.pidFile()
                            )
 

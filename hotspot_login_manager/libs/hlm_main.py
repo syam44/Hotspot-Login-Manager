@@ -13,11 +13,8 @@
 
 
 #-----------------------------------------------------------------------------
-# Do not import any HLM module before these ones, those services are needed everywhere!
-# Also, don't touch their relative order.
-import hotspot_login_manager.libs.core.hlm_log
+# Do not import any HLM module before this one, those services are needed everywhere!
 import hotspot_login_manager.libs.core.hlm_globals
-import hotspot_login_manager.libs.core.hlm_i18n
 #
 import sys
 import traceback
@@ -34,14 +31,14 @@ _forceDebug = True
 #-----------------------------------------------------------------------------
 def main():
     try:
-        globals()['__builtins__']['isDebug'] = False
+        # Parse arguments
         args = hlm_args.args()
         # Enforce global debugging flag
         if _forceDebug:
             args.logLevel = 'debug'
-        # Apply command-line debugging flag back to the global flag
-        globals()['__builtins__']['isDebug'] = (args.logLevel == 'debug')
-        if isDebug: logDebug('Debugging mode is on.')
+        # Apply command-line debugging flag
+        hotspot_login_manager.libs.core.hlm_globals.setLogLevel(args.logLevel)
+        if __DEBUG__: logDebug('Debugging mode is on.')
 
         # --daemon
         if args.runDaemon:
@@ -68,12 +65,12 @@ def main():
 
     except ImportError as exc:
         logError('Couldn\'t load module: {0}'.format(exc))
-        if isDebug: logDebug('Full exception info:', ''.join(traceback.format_exception(*sys.exc_info())))
+        if __DEBUG__: logDebug('Full exception info:', ''.join(traceback.format_exception(*sys.exc_info())))
         sys.exit(255)
 
     except BaseException as exc:
         logError(exc)
-        if isDebug: logDebug('Full exception info:', ''.join(traceback.format_exception(*sys.exc_info())))
+        if __DEBUG__: logDebug('Full exception info:', ''.join(traceback.format_exception(*sys.exc_info())))
         sys.exit(1)
 
     sys.exit(0)

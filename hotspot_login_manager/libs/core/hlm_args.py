@@ -18,7 +18,7 @@ import re
 import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
-from hotspot_login_manager.libs.core import hlm_log
+from hotspot_login_manager.libs.core import hlm_globals
 from hotspot_login_manager.libs.core import hlm_paths
 from hotspot_login_manager.libs.notifier import hlm_backends
 
@@ -97,7 +97,7 @@ def _parse():
 
     # Apply default values
     if options.logLevel == None:
-        options.logLevel = hlm_log.defaultLevel
+        options.logLevel = hlm_globals.defaultLogLevel
     if options.runDaemon:
         # We'll handle daemonCredentials later on because it could be defined in daemon.conf
         if options.daemonConfig == None:
@@ -183,8 +183,8 @@ def _parseArgs(ignoreNotifier):
     group = OptionGroup(parser, _('Verbosity'))
     group.add_option('--log', metavar = _('LEVEL'),
                      help = _('Determine the maximum verbosity LEVEL of the informational messages. In decreasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. In both daemon modes, messages are emitted to syslog\'s {2} facility.')
-                            .format(quote(hlm_log.orderedLevels), quote(hlm_log.defaultLevel), quote(hlm_log.facilityName)),
-                     dest = 'logLevel', choices = hlm_log.orderedLevels)
+                            .format(quote(hlm_globals.availableLogLevels), quote(hlm_globals.defaultLogLevel), quote('daemon')),
+                     dest = 'logLevel', choices = hlm_globals.availableLogLevels)
     parser.add_option_group(group)
 
     (options, strayArgs) = parser.parse_args()

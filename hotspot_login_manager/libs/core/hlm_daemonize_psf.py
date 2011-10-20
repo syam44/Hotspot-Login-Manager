@@ -164,7 +164,7 @@ def setSignalMap(signals):
     ''' Define the signal map of the process.
     '''
     pass
-    logError('NOT IMPLEMENTED: Signals map')
+    logWarning('NOT IMPLEMENTED: Signals map')
 
 
 #-----------------------------------------------------------------------------

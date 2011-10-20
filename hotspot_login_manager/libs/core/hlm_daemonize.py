@@ -19,11 +19,10 @@ import pwd
 #
 from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_application
+from hotspot_login_manager.libs.core import hlm_daemonize_psf
 from hotspot_login_manager.libs.core import hlm_log
 from hotspot_login_manager.libs.core import hlm_pidfile
 from hotspot_login_manager.libs.core import hlm_psargs
-#
-from hotspot_login_manager.libs.core import hlm_daemonize_psf
 #
 from hotspot_login_manager.libs.core import hlm_platform
 hlm_platform.install(vars(), 'rlimit_files')
@@ -65,13 +64,12 @@ def daemonize(
 
               # unprivileged options (any user)
               hookPreDetach = None,         # Function that will be called just before the process is detached.
-              logLevel = None,              # Maximum log level. None does not create a log object (which is strongly discouraged).
               detach = None,                # None : detach the process, except when called from init / inetd
                                             # True: always detach the process
                                             # False: never detach the process
 
-              signals = {},                 # Signals map. Each dictionary entry must be in the form { signal.SIGWHATEVER: function }
-                                            #     Signals not available for the current platform are left as-is.
+              signals = {},                 # Signals map. Each dictionary entry must be in the form { 'SIGWHATEVER': function }
+                                            #     Signals not available for the current platform are ignored rather than raising an error.
                                             #     None as the function object results in the signal being ignored (signal.SIG_IGN).
 
               keepFiles = [],               # List of file-like objects / filenos that must be kept open.
@@ -88,7 +86,7 @@ def daemonize(
     # Prevent core dumps
     if preventCoreDump:
         hlm_daemonize_psf.preventCoreDump()
-        if isDebug: logDebug('Prevented core dump.')
+        if __DEBUG__: logDebug('Prevented core dump.')
 
     # hookPreChroot
     if hookPreChroot != None:
@@ -96,15 +94,15 @@ def daemonize(
     # chroot
     if chroot != None:
         hlm_daemonize_psf.setChroot(chroot)
-        if isDebug: logDebug('Chrooted to {0}.'.format(quote(chroot)))
+        if __DEBUG__: logDebug('Chrooted to {0}.'.format(quote(chroot)))
 
     # Change working directory
     hlm_daemonize_psf.setWorkingDir(workingDir)
-    if isDebug: logDebug('Changed working directory to {0}.'.format(quote(workingDir)))
+    if __DEBUG__: logDebug('Changed working directory to {0}.'.format(quote(workingDir)))
     # Change umask
     if umask != None:
         hlm_daemonize_psf.setUmask(umask)
-        if isDebug: logDebug('Changed creation file mask to {0}.'.format(oct(umask)))
+        if __DEBUG__: logDebug('Changed creation file mask to {0}.'.format(oct(umask)))
 
     # hookPreChangeOwner
     if hookPreChangeOwner != None:
@@ -112,11 +110,10 @@ def daemonize(
     # Change process owner
     (uid, gid) = _lookupOwnerIds(uid, gid)
     hlm_daemonize_psf.setOwner(uid, gid)
-    if isDebug: logDebug('Changed process owner to UID={0}, GID={1}.'.format(uid, gid))
+    if __DEBUG__: logDebug('Changed process owner to UID={0}, GID={1}.'.format(uid, gid))
 
     # Create log object before we detach from the terminal
-    if logLevel != None:
-        hlm_log.open(logLevel)
+    hlm_log.open()
 
     # hookPreDetach
     if hookPreDetach != None:
@@ -124,9 +121,9 @@ def daemonize(
     # Detach the process
     if detach != False:
         oldPID = os.getpid()
-        if isDebug: logDebug('Preparing to detach process (PID={0})...'.format(oldPID))
+        if __DEBUG__: logDebug('Preparing to detach process (PID={0})...'.format(oldPID))
         hlm_daemonize_psf.detachProcess(detach, hlm_log.activate)
-        if isDebug:
+        if __DEBUG__:
             newPID = os.getpid()
             if oldPID != newPID:
                 logDebug('Successfully detached process (PID={0}).'.format(os.getpid()))
@@ -137,13 +134,13 @@ def daemonize(
 
     # Set signal map
     hlm_daemonize_psf.setSignalMap(signals)
-    if isDebug: logDebug('Signal handlers have been installed.')
+    if __DEBUG__: logDebug('Signal handlers have been installed.')
     # std* streams redirects
     hlm_daemonize_psf.redirectStandardStreams(stdin, stdout, stderr)
-    if isDebug: logDebug('Standard streams have been redirected.')
+    if __DEBUG__: logDebug('Standard streams have been redirected.')
     # Close file descriptors (we want to keep custom std* streams too)
     hlm_daemonize_psf.closeFiles(keepFiles, maxFileDescriptors())
-    if isDebug: logDebug('All irrelevant file descriptors have been closed.')
+    if __DEBUG__: logDebug('All irrelevant file descriptors have been closed.')
 
     # Create the PID lock file
     if pidFile != None:
@@ -162,7 +159,7 @@ def _ensureCanonicalCommandLine():
         if args.strayArgs == [':']:
             raise FatalError('[BUG] Unable to enforce canonical command-line, exiting.')
 
-        if isDebug: logDebug('Relaunching the process using a canonical command-line...')
+        if __DEBUG__: logDebug('Relaunching the process using a canonical command-line...')
         # Restart the daemon with a properly canonicalized command-line
         exeName = hlm_application.getExecutableName()
         if args.runDaemon:

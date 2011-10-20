@@ -38,7 +38,7 @@ def createPIDFile(path):
     '''
     try:
         pid = _PIDFile(path)
-        if isDebug: logDebug('Created PID file {0} with PID {1}.'.format(quote(path), os.getpid()))
+        if __DEBUG__: logDebug('Created PID file {0} with PID {1}.'.format(quote(path), os.getpid()))
     except OSError as exc:
         if exc.errno == 2:
             raise FatalError(_('Can\'t write the PID lock file {0}: directory {1} does not exist.').format(quote(path), quote(os.path.dirname(path))))

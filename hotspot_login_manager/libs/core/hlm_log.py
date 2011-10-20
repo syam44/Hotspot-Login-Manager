@@ -8,21 +8,9 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Log facility with capped logging levels.
+# Description: Daemon logging facility.
 #              Uses syslog under the hood.
 #
-
-
-#-----------------------------------------------------------------------------
-''' Module usage:
-        This module automatically installs the logging services in every single module.
-
-        Every module has access to the following functions:
-            logDebug(), logInfo(), logWarning(), logError() just print/log their arguments depending on whether a log facility is available.
-
-        In order to correctly initialize the logging services, the main script (hotspot-login-manager)
-        must import hlm_log as early as possible (first HLM import).
-'''
 
 
 #-----------------------------------------------------------------------------
@@ -32,40 +20,12 @@ import syslog
 
 
 #-----------------------------------------------------------------------------
-#
-# Available verbosity levels
-#
-levels = { 'error'   : syslog.LOG_ERR,
-           'warning' : syslog.LOG_WARNING,
-           'info'    : syslog.LOG_INFO,
-           'debug'   : syslog.LOG_DEBUG,
-         }
-orderedLevels = ['debug', 'info', 'warning', 'error']
-
-#
-# Default verbosity level
-#
-defaultLevel = 'info'
-
-#
-# Syslog's facility friendly name (see below for the real facility ID)
-#
-facilityName = 'daemon'
-
-#
-# Syslog's facility
-#
-_syslogFacility = syslog.LOG_DAEMON
-
-
-
-#-----------------------------------------------------------------------------
-def open(level):
+def open():
     ''' Open the syslog facility.
     '''
     global _logger
     if _logger == None:
-        _logger =  _Logger(level)
+        _logger =  _Logger()
 
 
 #-----------------------------------------------------------------------------
@@ -85,93 +45,53 @@ class _Logger(object):
         There should be only one instance of this class in the whole program.
     '''
     #-----------------------------------------------------------------------------
-    def __init__(self, level):
+    def __init__(self):
         self.__active = False
-        self.__priority = _translateLogLevel(level)
-        syslog.openlog('Hotspot Login Manager', (syslog.LOG_PID | syslog.LOG_NDELAY), _syslogFacility)
+        syslog.openlog('Hotspot Login Manager', (syslog.LOG_PID | syslog.LOG_NDELAY), syslog.LOG_DAEMON)
         atexit.register(syslog.closelog)
-        if isDebug: logDebug('Log facility is ready and waiting to be activated.')
+        if __DEBUG__: logDebug('Syslog facility is ready and waiting to be activated.')
 
 
     #-----------------------------------------------------------------------------
     def activate(self):
         if not self.__active:
+            global logDebug, logInfo, logWarning, logError
             globals()['__builtins__']['logDebug'] = self.logDebug
             globals()['__builtins__']['logInfo'] = self.logInfo
             globals()['__builtins__']['logWarning'] = self.logWarning
             globals()['__builtins__']['logError'] = self.logError
-            if isDebug: logDebug('Log facility is now active.')
+            if __DEBUG__: logDebug('Syslog facility is now active.')
             self.__active = True
 
 
     #-----------------------------------------------------------------------------
     def logDebug(self, *args):
-        self.__log(syslog.LOG_DEBUG, 'DEBUG:', *args)
+        if __DEBUG__:
+            self.__log(syslog.LOG_DEBUG, 'DEBUG:', *args)
 
 
     #-----------------------------------------------------------------------------
     def logInfo(self, *args):
-        self.__log(syslog.LOG_INFO, 'INFO:', *args)
+        if __INFO__:
+            self.__log(syslog.LOG_INFO, 'INFO:', *args)
 
 
     #-----------------------------------------------------------------------------
     def logWarning(self, *args):
-        self.__log(syslog.LOG_WARNING, 'WARNING:', *args)
+        if __WARNING__:
+            self.__log(syslog.LOG_WARNING, 'WARNING:', *args)
 
 
     #-----------------------------------------------------------------------------
     def logError(self, *args):
-        self.__log(syslog.LOG_ERR, 'ERROR:', *args)
+        if __ERROR__:
+            self.__log(syslog.LOG_ERR, 'ERROR:', *args)
 
 
     #-----------------------------------------------------------------------------
     def __log(self, priority, *args):
         message = ' '.join(map(str, args))
-        if priority <= self.__priority:
-            syslog.syslog(priority, message)
-
-
-#-----------------------------------------------------------------------------
-def _translateLogLevel(level):
-    ''' Convenience function to translate hlm_log log levels to syslog values.
-    '''
-    try:
-        return levels[level]
-    except KeyError:
-        return levels[defaultLevel]
-
-
-#-----------------------------------------------------------------------------
-#
-# Logging functions.
-#
-def _logStdErr(*args):
-    ''' Used for the logDebug(), logWarning() and logError() global functions until a log facility is available.
-    '''
-    print(*args, file = sys.stderr)
-
-
-def _logDebug(*args):
-    _logStdErr('DEBUG:', *args)
-
-def _logInfo(*args):
-    _logStdErr('INFO:', *args)
-
-def _logWarning(*args):
-    _logStdErr('WARNING:', *args)
-
-def _logError(*args):
-    _logStdErr('ERROR:', *args)
-
-
-#-----------------------------------------------------------------------------
-#
-# Install the logging services globally. They will be available to every module.
-#
-globals()['__builtins__']['logDebug'] = _logDebug
-globals()['__builtins__']['logInfo'] = _logInfo
-globals()['__builtins__']['logWarning'] = _logWarning
-globals()['__builtins__']['logError'] = _logError
+        syslog.syslog(priority, message)
 
 
 #-----------------------------------------------------------------------------
