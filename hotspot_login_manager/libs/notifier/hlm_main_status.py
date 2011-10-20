@@ -1,4 +1,3 @@
-#!/usr/bin/python3.1
 # -*- coding:utf-8 -*-
 #
 # hotspot-login-manager
@@ -9,27 +8,20 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Entry point.
-#
-# Note: Keeping the main script to the bare minimum enhances load-time
-#       thanks to precompiled .pyc files.
-#       So yeah, *bare* minimum.
+# Description: Main program for the status client.
 #
 
 
 #-----------------------------------------------------------------------------
-import sys # This must be imported first to ensure sys.exit() works
-try:
-    from hotspot_login_manager.libs import hlm_main
-
-except ImportError as err:
-    print('Couldn\'t load module: {0}'.format(err), file = sys.stderr)
-    sys.exit(255)
+import sys
+#
 
 
 #-----------------------------------------------------------------------------
-if __name__ == '__main__':
-   hlm_main.main()
+def main(args):
+    raise NotImplementedError('NOT IMPLEMENTED: --status')
+
+    sys.exit(0)
 
 
 #-----------------------------------------------------------------------------

@@ -21,12 +21,6 @@ from hotspot_login_manager.libs.core import hlm_psargs
 
 
 #-----------------------------------------------------------------------------
-class PIDFileError(OSError):
-    ''' Error creating a PID lock file.
-    '''
-
-
-#-----------------------------------------------------------------------------
 def readPID(path):
     ''' Read the PID contained in a file.
     '''
@@ -42,17 +36,17 @@ def readPID(path):
 def createPIDFile(path):
     ''' Create a PID lock file and keep it alive until the process exits.
     '''
-    if path != None:
-        try:
-            pid = _PIDFile(path)
-            debug('hlm_pidfile.createPIDFile: created pidfile «{0}»'.format(path))
-        except OSError as err:
-            pathQuoted = '«' + path + '»'
-            if err.errno == 13:
-                raise PIDFileError(err.errno, _('Can\'t write the PID lock file {0}: permission denied.').format(pathQuoted))
-            if err.errno == 17:
-                raise PIDFileError(err.errno, _('The PID lock file {0} already exists. Is another instance of HLM already running?').format(pathQuoted))
-            raise PIDFileError(err.errno, err.strerror, path)
+    try:
+        pid = _PIDFile(path)
+        if isDebug: logDebug('Created PID file {0} with PID {1}.'.format(quote(path), os.getpid()))
+    except OSError as exc:
+        if exc.errno == 2:
+            raise FatalError(_('Can\'t write the PID lock file {0}: directory {1} does not exist.').format(quote(path), quote(os.path.dirname(path))))
+        if exc.errno == 13:
+            raise FatalError(_('Can\'t write the PID lock file {0}: permission denied.').format(quote(path)))
+        if exc.errno == 17:
+            raise FatalError(_('The PID lock file {0} already exists. Is another instance of HLM already running?').format(quote(path)))
+        raise FatalError(_('Can\'t write the PID lock file {0}: {1}').format(quote(path)))
 
 
 #-----------------------------------------------------------------------------
@@ -112,12 +106,10 @@ def _deleteIfStaleFile(path):
     '''
     try:
         pid = readPID(path)
-        debug('hlm_pidfile._deleteIfStaleFile: checking PID {0}'.format(pid))
         if pid != None:
             isCanonical = hlm_psargs.isCanonicalCommandLine(pid)
             if (isCanonical == None) or (isCanonical == False):
                 os.remove(path)
-                debug('hlm_pidfile._deleteIfStaleFile: removed stale pidfile «{0}»'.format(path))
     except:
         pass
 

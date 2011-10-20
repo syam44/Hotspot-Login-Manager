@@ -1,3 +1,6 @@
 Note: the following dependencies are expressed as Debian package names.
 
 python3.1
+
+Linux:
+    procps ("ps" utility)

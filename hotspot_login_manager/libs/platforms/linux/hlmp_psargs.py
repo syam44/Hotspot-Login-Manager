@@ -66,7 +66,7 @@ def _ourCanonicalCommandLinePrefix():
         elif args.runNotifier:
             ccl += '--notifier'
         else:
-            raise Exception('[BUG] Unexpected combination of command-line arguments.')
+            raise FatalError('[BUG] Unexpected combination of command-line arguments (should never happen).')
         # Store result in the cache
         _ourCanonicalCommandLinePrefix.__cache = ccl
 

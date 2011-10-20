@@ -18,8 +18,8 @@ import re
 import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
+from hotspot_login_manager.libs.core import hlm_log
 from hotspot_login_manager.libs.core import hlm_paths
-from hotspot_login_manager.libs.daemon import hlm_log
 from hotspot_login_manager.libs.notifier import hlm_backends
 
 
@@ -72,28 +72,36 @@ def _parse():
     # Do not accept additional options except a stray ':' to avoid infinite recursion during command-line canonicalization
     # (cf. core/hlm_daemonize, core/hlm_psargs)
     if (options.strayArgs != []) and (options.strayArgs != [':']):
-        exitWithError(_N('Unknown option:', 'Unknown options:', len(options.strayArgs)) + ' ' + ' '.join(options.strayArgs))
+        exitWithError(_N('Unknown option:',
+                         'Unknown options:',
+                         len(options.strayArgs))
+                      + ' ' + ' '.join(options.strayArgs))
 
     # Mutually exclusive options
-    mainCommands = _quoted(['--daemon', '--reauth', '--status', '--notifier'])
+    mainCommands = quote(['--daemon', '--reauth', '--status', '--notifier'])
     mainCommandsCount = sum([options.runDaemon, options.runReauth, options.runStatus, options.runNotifier])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
         exitWithError(_('Incompatible options: the options {0} are mutually exclusive.').format(mainCommands))
-    if (not options.runDaemon) and ((options.daemonConfig != None) or (options.daemonLogLevel != None)):
+    if (not options.runDaemon) and ((options.daemonConfig != None) or (options.daemonCredentials != None)):
+        optionNames = []
         if options.daemonConfig != None:
-            optionName = '--config'
-        elif options.daemonLogLevel != None:
-            optionName = '--log'
-        exitWithError(_('Incompatible options: {0} can only be used in combination with {1}.').format(_quoted([optionName]), _quoted(['--daemon'])))
+            optionNames.append('--config')
+        if options.daemonCredentials != None:
+            optionNames.append('--credentials')
+        exitWithError(_N('Incompatible options: {0} can only be used in combination with {1}.',
+                         'Incompatible options: {0} can only be used in combination with {1}.',
+                         len(optionNames))
+                        .format(quote(optionNames), quote('--daemon')))
 
     # Apply default values
+    if options.logLevel == None:
+        options.logLevel = hlm_log.defaultLevel
     if options.runDaemon:
+        # We'll handle daemonCredentials later on because it could be defined in daemon.conf
         if options.daemonConfig == None:
-            options.daemonConfig = hlm_paths.defaultConfigFile()
-        if options.daemonLogLevel == None:
-            options.daemonLogLevel = hlm_log.defaultLevel
+            options.daemonConfig = hlm_paths.daemonConfig()
 
     return options
 
@@ -108,15 +116,18 @@ def _parseArgs(ignoreNotifier):
     # Set default options
     parser.set_defaults(displayHelp = False,
                         displayVersion = False,
-                        # User notifications
+                        # User commands
                         runReauth = False,
                         runStatus = False,
+                        # Notification daemon
                         runNotifier = False,
                         notifierBackend = None,
                         # System daemon
                         runDaemon = False,
                         daemonConfig = None,
-                        daemonLogLevel = None,
+                        daemonCredentials = None,
+                        # Verbosity
+                        logLevel = None,
                        )
 
     group = OptionGroup(parser, _('General information'))
@@ -129,7 +140,16 @@ def _parseArgs(ignoreNotifier):
     parser.add_option_group(group)
 
     group = OptionGroup(parser, _('User commands'))
+    group.add_option('-r', '--reauth',
+                     help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
+                     dest = 'runReauth', action = 'store_true')
+    group.add_option('-s', '--status',
+                     help = _('Display the current status of the system daemon and exit.'),
+                     dest = 'runStatus', action = 'store_true')
+    parser.add_option_group(group)
 
+    group = OptionGroup(parser, _('Notification daemon options'),
+                                _('This daemon can be run under an unprivileged account.'))
     # Double-pass arguments checking to reduce performance hit when many notification backends are available
     # We don't want to check every single backend if the user doesn't ask that
     if ignoreNotifier:
@@ -138,34 +158,33 @@ def _parseArgs(ignoreNotifier):
     else:
         availableNotifierBackends = hlm_backends.getAvailableBackends()
         if availableNotifierBackends != []:
-            notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(_quoted(availableNotifierBackends))
+            notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(quote(availableNotifierBackends))
         else:
             notifierBackendsMessage = _('There isn\'t any available notification backend for your current user session. You cannot run a notifier daemon.')
 
-    group.add_option('-r', '--reauth',
-                     help = _('Ask the system daemon to reauthenticate you immediately (bypassing the connection watchdog\'s timer) in case the hotspot decided to disconnect you.'),
-                     dest = 'runReauth', action = 'store_true')
-    group.add_option('-s', '--status',
-                     help = _('Display the current status of the system daemon and exit.'),
-                     dest = 'runStatus', action = 'store_true')
     group.add_option('-n', '--notifier', metavar = _('BACKEND'),
                      help = _('Run in the background and display end-user notifications using the BACKEND method.') + ' ' + notifierBackendsMessage,
                      choices = availableNotifierBackends, dest = 'notifierBackend')
     parser.add_option_group(group)
 
-    group = OptionGroup(parser, _('System daemon options'))
+    group = OptionGroup(parser, _('System daemon options'),
+                                _('This daemon must be run under a privileged account.'))
     group.add_option('-d', '--daemon',
                      help = _('Run as a system daemon (unique instance).'),
                      dest = 'runDaemon', action = 'store_true')
     group.add_option('--config', metavar = _('FILE'),
-                     help = _('Use the configuration file FILE. If this option is omitted {0} will be used.')
-                            .format(_quoted([hlm_paths.defaultConfigFile()])),
+                     help = _('Use the daemon configuration file FILE.'),
                      dest = 'daemonConfig')
-    availableLogLevels = list(hlm_log.levels.keys())
+    group.add_option('--credentials', metavar = _('FILE'),
+                     help = _('Use the credentials configuration file FILE. This option overrides the equivalent option from the daemon configuration file.'),
+                     dest = 'daemonCredentials')
+    parser.add_option_group(group)
+
+    group = OptionGroup(parser, _('Verbosity'))
     group.add_option('--log', metavar = _('LEVEL'),
-                     help = _('Determine the maximum verbosity LEVEL of the log messages. In increasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. Log messages are emitted to syslog\'s {2} facility.')
-                            .format(_quoted(availableLogLevels), _quoted([hlm_log.defaultLevel]), _quoted([hlm_log.facilityName])),
-                     dest = 'daemonLogLevel', choices = availableLogLevels)
+                     help = _('Determine the maximum verbosity LEVEL of the informational messages. In decreasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. In both daemon modes, messages are emitted to syslog\'s {2} facility.')
+                            .format(quote(hlm_log.orderedLevels), quote(hlm_log.defaultLevel), quote(hlm_log.facilityName)),
+                     dest = 'logLevel', choices = hlm_log.orderedLevels)
     parser.add_option_group(group)
 
     (options, strayArgs) = parser.parse_args()
@@ -188,37 +207,30 @@ def _i18nErrorMapper(error):
     if error.startswith('ambiguous option: '):
         match = re.search('^ambiguous option: ([^ ]+) \\((.*)\\?\\)$', error)
         if match != None:
-            optionName = _quoted([match.group(1)])
-            possibleOptions = _quoted(match.group(2).split(', '))
+            optionName = quote(match.group(1))
+            possibleOptions = quote(match.group(2).split(', '))
             exitWithError(_('Ambiguous option: {0} could mean {1}.').format(optionName, possibleOptions))
 
     if error.endswith(' option requires an argument'):
         match = re.search('^([^ ]+) option requires an argument$', error)
         if match != None:
-            optionName = _quoted([match.group(1)])
+            optionName = quote(match.group(1))
             exitWithError(_('Option {0} requires an argument.').format(optionName))
 
     if error.startswith('option '):
         match = re.search('^option ([^:]+): invalid choice: \'(.+)\' \(choose from (\'(.+)\')?\)$', error)
         if match != None:
-            optionName = _quoted([match.group(1)])
-            invalidChoice = _quoted([match.group(2)])
+            optionName = quote(match.group(1))
+            invalidChoice = quote(match.group(2))
             validChoices = match.group(4)
             if validChoices != None:
-                possibleChoices = _quoted(validChoices.split('\', \''))
+                possibleChoices = quote(validChoices.split('\', \''))
                 possibleChoices = _('Valid arguments are: {0}.').format(possibleChoices)
             else:
                 possibleChoices = _('There isn\'t any possible valid argument. This option is unusable.')
             exitWithError(_('Invalid argument {0} for option {1}.').format(invalidChoice, optionName) + '\n' + possibleChoices)
 
     exitWithError(error)
-
-
-#-----------------------------------------------------------------------------
-def _quoted(items):
-    ''' Convenience function for wrapping a list of items inside « » quotes, separated by commas.
-    '''
-    return '«' + ('», «').join(items) + '»'
 
 
 #-----------------------------------------------------------------------------

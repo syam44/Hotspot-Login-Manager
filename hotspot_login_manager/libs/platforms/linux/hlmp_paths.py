@@ -14,24 +14,45 @@
 
 
 #-----------------------------------------------------------------------------
-def defaultConfigFile():
-    ''' Return the default path for the configuration file.
+def configPath():
+    ''' Return the default directory for the configuration files (daemon and credentials).
     '''
-    return '/etc/hotspot-login-manager.conf'
+    return '/etc/hotspot-login-manager'
 
 
 #-----------------------------------------------------------------------------
-def daemonPID():
+def daemonConfig():
+    ''' Return the default path for the daemon configuration file.
+    '''
+    return configPath() + '/daemon.conf'
+
+
+#-----------------------------------------------------------------------------
+def credentialsConfig():
+    ''' Return the default path for the credentials configuration file.
+    '''
+    return configPath() + '/credentials.conf'
+
+
+#-----------------------------------------------------------------------------
+def daemonRuntimePath():
+    ''' Return the directory for the daemon's runtime files (PID and socket).
+    '''
+    return '/var/run/hotspot-login-manager'
+
+
+#-----------------------------------------------------------------------------
+def pidFile():
     ''' Return the path for the daemon's PID file.
     '''
-    return '/var/run/hotspot-login-manager.pid'
+    return daemonRuntimePath() + '/hlm.pid'
 
 
 #-----------------------------------------------------------------------------
 def notificationSocket():
     ''' Return the path for the daemon's client notification socket.
     '''
-    return '/var/run/hotspot-login-manager.socket'
+    return daemonRuntimePath() + '/hlm.socket'
 
 
 #-----------------------------------------------------------------------------

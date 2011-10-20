@@ -29,7 +29,7 @@ from hotspot_login_manager.libs.core import hlm_plugin
 (_python_major, _python_minor, _python_release) = platform.python_version_tuple()
 (_python_major, _python_minor) = (int(_python_major), int(_python_minor))
 if (_python_major < 3) or ((_python_major == 3) and (_python_minor < 1)):
-    print(_('Sorry, the Python interpreter version must be at least 3.1 but yours is {0}.{1}.').format(_python_major, _python_minor))
+    logError(_('Sorry, the Python interpreter version must be at least 3.1 but yours is {0}.{1}.').format(_python_major, _python_minor))
     sys.exit(255)
 
 
@@ -43,7 +43,7 @@ if (os.name == 'posix') and (platform.system() == 'Linux'):
     _platform = 'linux'
 
 else:
-    print(_('Sorry, your platform ({0}/{1} {2}) is not supported.').format(os.name, platform.system(), platform.release()))
+    logError(_('Sorry, your platform ({0}/{1} {2}) is not supported.').format(os.name, platform.system(), platform.release()))
     sys.exit(255)
 
 #
