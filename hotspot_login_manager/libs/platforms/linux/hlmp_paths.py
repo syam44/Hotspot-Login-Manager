@@ -38,7 +38,7 @@ def credentialsConfig():
 def daemonRuntimePath():
     ''' Return the directory for the daemon's runtime files (PID and socket).
     '''
-    return '/var/run/hotspot-login-manager'
+    return '/tmp/hotspot-login-manager' # FIXME: /tmp so we can test in userland; real value: '/var/run/hotspot-login-manager'
 
 
 #-----------------------------------------------------------------------------

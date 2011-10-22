@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 #
 # hotspot-login-manager
 # https://github.com/syam44/Hotspot-Login-Manager

@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# hotspot-login-manager
+# https://github.com/syam44/Hotspot-Login-Manager
+#
+# Distributed under the GNU General Public License version 3
+# https://www.gnu.org/copyleft/gpl.html
+#
+# Authors: syam (aks92@free.fr)
+#
+# Description: Install the various hooks and configuration files required for HLM
+#
+set -e
+
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+installFile()
+{
+    local RIGHTS="$1"
+    local FILE="$2"
+    if [ ! -e "$FILE" ]; then
+        cp "distrib/$FILE" "$FILE"
+        chown root:root "$FILE"
+        chmod "$RIGHTS" "$FILE"
+    fi
+}
+
+case "$1" in
+  install)
+        "$0" remove
+        installFile a-ws,a+rx,u+w "/etc/init.d/hotspot-login-manager"
+        installFile a-ws,a+rx,u+w "/etc/network/if-up.d/hotspot-login-manager"
+        rm "/etc/network/if-down.d/hotspot-login-manager" 2>/dev/null || true
+        ln -s "/etc/network/if-up.d/hotspot-login-manager" "/etc/network/if-down.d/hotspot-login-manager"
+        mkdir -p "/etc/hotspot-login-manager"
+        installFile a-rwxs,u+rw "/etc/hotspot-login-manager/daemon.conf"
+        installFile a-rwxs,u+rw "/etc/hotspot-login-manager/credentials.conf"
+        chmod a-ws,a+rx,u+w ./hotspot-login-manager
+        ln -s "$(readlink -f ./hotspot-login-manager)" /usr/local/bin/
+        update-rc.d hotspot-login-manager defaults
+        ;;
+  remove)
+        update-rc.d hotspot-login-manager remove || true
+        rm "/etc/init.d/hotspot-login-manager" || true
+        rm "/etc/network/if-up.d/hotspot-login-manager" || true
+        rm "/etc/network/if-down.d/hotspot-login-manager" || true
+        rm "/usr/local/bin/hotspot-login-manager" || true
+        ;;
+  purge)
+        "$0" remove
+        rm "/etc/hotspot-login-manager/daemon.conf" || true
+        rm "/etc/hotspot-login-manager/credentials.conf" || true
+        rmdir "/etc/hotspot-login-manager" || true
+        ;;
+esac

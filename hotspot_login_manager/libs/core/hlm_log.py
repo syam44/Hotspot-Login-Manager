@@ -55,7 +55,6 @@ class _Logger(object):
     #-----------------------------------------------------------------------------
     def activate(self):
         if not self.__active:
-            global logDebug, logInfo, logWarning, logError
             globals()['__builtins__']['logDebug'] = self.logDebug
             globals()['__builtins__']['logInfo'] = self.logInfo
             globals()['__builtins__']['logWarning'] = self.logWarning

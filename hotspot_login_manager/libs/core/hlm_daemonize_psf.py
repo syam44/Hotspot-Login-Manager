@@ -26,6 +26,7 @@
 import errno
 import os
 import resource
+import signal
 import socket
 import sys
 
@@ -101,9 +102,9 @@ def detachProcess(detach, hookFirstFork):
     '''
     if detach == None:
         if _isProcessStartedByInit() or _isProcessStartedByInetd():
-            return
+            return False
     elif not detach:
-        return
+        return False
 
     def forkAndExit(error):
         ''' Fork a child process, then exit the parent process.
@@ -120,6 +121,7 @@ def detachProcess(detach, hookFirstFork):
     if hookFirstFork != None:
         hookFirstFork()
     forkAndExit(_('failed second fork.'))
+    return True
 
 
 #-----------------------------------------------------------------------------
@@ -163,8 +165,17 @@ def redirectStandardStreams(stdin, stdout, stderr):
 def setSignalMap(signals):
     ''' Define the signal map of the process.
     '''
-    pass
-    logWarning('NOT IMPLEMENTED: Signals map')
+    if signals == None:
+        return
+
+    for (name, handler) in signals.items():
+        if hasattr(signal, name):
+            oldname = name
+            name = getattr(signal, name)
+            if handler == None:
+                handler = signal.SIG_IGN
+            logDebug('{0} ({1}) = {2}'.format(oldname, name, handler))
+            signal.signal(name, handler)
 
 
 #-----------------------------------------------------------------------------

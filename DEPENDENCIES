@@ -1,6 +1,7 @@
 Note: the following dependencies are expressed as Debian package names.
 
 python3.1
+syslog
 
 Linux:
     procps ("ps" utility)

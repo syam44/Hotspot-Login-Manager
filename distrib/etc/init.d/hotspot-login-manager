@@ -1,0 +1,59 @@
+#!/bin/sh
+
+#
+# hotspot-login-manager
+# https://github.com/syam44/Hotspot-Login-Manager
+#
+# Distributed under the GNU General Public License version 3
+# https://www.gnu.org/copyleft/gpl.html
+#
+# Authors: syam (aks92@free.fr)
+#
+# Description: Daemon control.
+#
+
+### BEGIN INIT INFO
+# Provides:          hotspot-login-manager
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Hotspot Login Manager daemon control
+# Description:       Hotspot Login Manager daemon control
+### END INIT INFO
+
+set -e
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="daemon"
+NAME="Hotspot Login Manager"
+PIDFILE="/var/run/hotspot-login-manager/hlm.pid"
+
+# Gracefully exit if the package has been removed.
+test -x "$(which hotspot-login-manager)" || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+        log_daemon_msg "Starting $DESC" "$NAME... "
+        hotspot-login-manager --daemon && log_progress_msg "started" && log_end_msg 0
+        exit $?
+        ;;
+  stop)
+        log_daemon_msg "Stopping $DESC" "$NAME... "
+        PID="$(cat "$PIDFILE")"
+        kill "$PID" && log_progress_msg "stopped" && log_end_msg 0
+        exit $?
+        ;;
+  restart|force-reload)
+        "$0" stop
+        "$0" start
+        ;;
+  *)
+        echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

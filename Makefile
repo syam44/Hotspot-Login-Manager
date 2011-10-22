@@ -19,6 +19,9 @@ usage:
 	@echo "Targets:"
 	@echo "    all         Make all project files: version, i18n-pot, i18n-mo"
 	@echo "    clean       Clean intermediary files."
+	@echo "    install     Install hooks and configuration files."
+	@echo "    uninstall   Uninstall hooks only, keep configuration files around."
+	@echo "    purge       Uninstall hooks and DELETE configuration files."
 	@echo
 	@echo "    i18n-mo     Generate .mo catalog files (program translations) from existing .po translated files."
 	@echo "    i18n-pot    Generate .pot translation model."
@@ -42,6 +45,30 @@ clean-mo:
 
 clean-pyc:
 	find ./ -type f -name '*.pyc' -print0 | xargs -0 rm 2>/dev/null || true
+
+
+#
+# Install hooks and configuration files
+#
+.PHONY: install
+install:
+	devtools/make-install install
+
+
+#
+#  Uninstall hooks only, keep configuration files around
+#
+.PHONY: uninstall
+uninstall:
+	devtools/make-install uninstall
+
+
+#
+# Uninstall hooks and DELETE configuration files
+#
+.PHONY: purge
+purge:
+	devtools/make-install purge
 
 
 #

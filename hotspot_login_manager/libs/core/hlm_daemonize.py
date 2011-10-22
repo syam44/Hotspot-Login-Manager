@@ -16,16 +16,53 @@
 import grp
 import os
 import pwd
+import signal
+import sys
 #
 from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_daemonize_psf
 from hotspot_login_manager.libs.core import hlm_log
-from hotspot_login_manager.libs.core import hlm_pidfile
 from hotspot_login_manager.libs.core import hlm_psargs
 #
 from hotspot_login_manager.libs.core import hlm_platform
 hlm_platform.install(vars(), 'rlimit_files')
+
+
+#-----------------------------------------------------------------------------
+def defaultSignalsMap():
+    ''' Default signals map.
+    '''
+    return { 'SIGABRT': cleanExit,
+             'SIGFPE': cleanExit,
+             'SIGHUP': cleanExit,
+             'SIGILL': cleanExit,
+             'SIGINT': cleanExit,
+             'SIGPIPE': None,
+             'SIGSEGV': cleanExit,
+             'SIGTERM': cleanExit,
+             'SIGCHLD': None,
+             'SIGTSTP': None,
+             'SIGTTIN': None,
+             'SIGTTOU': None,
+             'SIGBUS': cleanExit,
+             'SIGSYS': cleanExit,
+             'SIGSTKFLT': cleanExit,
+           }
+
+
+#-----------------------------------------------------------------------------
+def cleanExit(signalNumber, stackFrame):
+    ''' Signal handler for exiting the daemon cleanly.
+    '''
+    if __INFO__:
+        signalName = 'unknown'
+        for (name, value) in vars(signal).items():
+            if value == signalNumber:
+                signalName = name
+                break
+        logInfo('Received signal {0} ({1}), exiting.'.format(signalNumber, signalName))
+    sys.exit(0)
 
 
 #-----------------------------------------------------------------------------
@@ -50,34 +87,34 @@ def daemonize(
               workingDir = '/',             # Working directory.
               umask = None,                 # Set umask (None: inherit from parent process, unreliable if the daemon creates files).
 
-              hookPreChangeOwner = None,    # Function that will be called just before the process owner is changed.
-              # privileged options (root)
-              uid = None,                   # Change process UID. [*]
-              gid = None,                   # Change process GID. [*]
-                                            # [*] If UID and/or GID are None, relinquish any inherited effective privilege elevation.
-                                            #     Both accept either an int (xID) or a string (name that will be looked up).
-
-              #-------------------------------------------------------------
-              # The next options will be processed under the new credentials
-              # (usually, an unprivileged user).
-              #-------------------------------------------------------------
 
               # unprivileged options (any user)
-              hookPreDetach = None,         # Function that will be called just before the process is detached.
+              syslogFacility = True,        # True: setup the syslog facility and activate it.
+                                            # False: do not use syslog.
+              hookPreDetach = None,         # Function that will be called just before the process is detached (if applicable, syslog facility will be available but not active).
+                                            # It will be called with a single argument (keepFiles) which must be returned either as-is or modified.
               detach = None,                # None : detach the process, except when called from init / inetd
                                             # True: always detach the process
                                             # False: never detach the process
 
-              signals = {},                 # Signals map. Each dictionary entry must be in the form { 'SIGWHATEVER': function }
+              signals = defaultSignalsMap(),# Signals map. Each dictionary entry must be in the form { 'SIGWHATEVER': handler }
                                             #     Signals not available for the current platform are ignored rather than raising an error.
-                                            #     None as the function object results in the signal being ignored (signal.SIG_IGN).
+                                            #     None as the handler object results in the signal being ignored (signal.SIG_IGN).
 
-              keepFiles = [],               # List of file-like objects / filenos that must be kept open.
               stdin = None,                 # File/fileno that is rebound to stdin (mode r).
               stdout = None,                # File/fileno that is rebound to stdout (mode w+).
               stderr = None,                # File/fileno that is rebound to stderr (mode w+).
 
-              pidFile = None,               # PID lock file name.
+              hookPreChangeOwner = None,    # Function that will be called just before the process owner is changed.
+                                            # It will be called with a single argument (keepFiles) which must be returned either as-is or modified.
+              # privileged options (root)
+              uid = None,                   # Change process UID. [*]
+              gid = None,                   # Change process GID. [*]
+                                            # [*] If UID and/or GID are None, relinquish any inherited effective privilege elevation.
+                                            #     Both accept either an int or a string (name that will be looked up).
+
+              # unprivileged options (any user)
+              keepFiles = [],               # List of file-like objects / filenos that must be kept open.
              ):
     ''' Turn the process into a well-behaved Unix daemon.
     '''
@@ -104,33 +141,27 @@ def daemonize(
         hlm_daemonize_psf.setUmask(umask)
         if __DEBUG__: logDebug('Changed creation file mask to {0}.'.format(oct(umask)))
 
-    # hookPreChangeOwner
-    if hookPreChangeOwner != None:
-        hookPreChangeOwner()
-    # Change process owner
-    (uid, gid) = _lookupOwnerIds(uid, gid)
-    hlm_daemonize_psf.setOwner(uid, gid)
-    if __DEBUG__: logDebug('Changed process owner to UID={0}, GID={1}.'.format(uid, gid))
-
     # Create log object before we detach from the terminal
-    hlm_log.open()
+    if syslogFacility:
+        hlm_log.open()
 
     # hookPreDetach
     if hookPreDetach != None:
-        hookPreDetach()
+        keepFiles = hookPreDetach(keepFiles)
     # Detach the process
     if detach != False:
-        oldPID = os.getpid()
-        if __DEBUG__: logDebug('Preparing to detach process (PID={0})...'.format(oldPID))
-        hlm_daemonize_psf.detachProcess(detach, hlm_log.activate)
         if __DEBUG__:
-            newPID = os.getpid()
-            if oldPID != newPID:
-                logDebug('Successfully detached process (PID={0}).'.format(os.getpid()))
+            oldPID = os.getpid()
+            logDebug('Preparing to detach process (PID={0})...'.format(oldPID))
+        detached = hlm_daemonize_psf.detachProcess(detach, hlm_log.activate)
+        if __DEBUG__:
+            if detached:
+                logDebug('The child process (PID {0}) has been detached from its parent (PID {1}).'.format(os.getpid(), oldPID))
             else:
-                logDebug('The process has been started by init or inetd, no need to detach.'.format(os.getpid()))
+                logDebug('The process (PID {0}) has been started by init or inetd, no need to detach.'.format(os.getpid()))
     # Ensure the syslog facility is active even if we are not detached.
-    hlm_log.activate()
+    if syslogFacility:
+        hlm_log.activate()
 
     # Set signal map
     hlm_daemonize_psf.setSignalMap(signals)
@@ -138,13 +169,18 @@ def daemonize(
     # std* streams redirects
     hlm_daemonize_psf.redirectStandardStreams(stdin, stdout, stderr)
     if __DEBUG__: logDebug('Standard streams have been redirected.')
+
+    # hookPreChangeOwner
+    if hookPreChangeOwner != None:
+        keepFiles = hookPreChangeOwner(keepFiles)
+    # Change process owner
+    (uid, gid) = _lookupOwnerIds(uid, gid)
+    hlm_daemonize_psf.setOwner(uid, gid)
+    if __DEBUG__: logDebug('Changed process owner to UID={0}, GID={1}.'.format(uid, gid))
+
     # Close file descriptors (we want to keep custom std* streams too)
     hlm_daemonize_psf.closeFiles(keepFiles, maxFileDescriptors())
     if __DEBUG__: logDebug('All irrelevant file descriptors have been closed.')
-
-    # Create the PID lock file
-    if pidFile != None:
-        hlm_pidfile.createPIDFile(pidFile)
 
 
 #-----------------------------------------------------------------------------
