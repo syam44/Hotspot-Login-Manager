@@ -18,8 +18,10 @@ import configparser
 from optparse import Values
 import re
 #
+from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_paths
+from hotspot_login_manager.libs.core import hlm_plugin
 
 
 #-----------------------------------------------------------------------------
@@ -77,7 +79,7 @@ def loadCredentials():
 
     result = Values()
     result.ping = None
-    result.ssids = []
+    result.ssids = {}
     try:
         sections = config.sections()
         regex = re.compile('^ssid *= *(.+)$')
@@ -85,26 +87,27 @@ def loadCredentials():
             if section == 'ping':
                 options = config.options('ping')
                 _checkAlienDirectives(['site', 'delay'], options, section)
-                _mandatoryDirective('site', options, section)
-                _mandatoryDirective('delay', options, section)
-                result.ping = config.get('ping', 'site')
-                result.delay = config.getint('ping', 'delay')
+                result.ping = _mandatoryDirective('site', options, section, config.get)
+                result.delay = _mandatoryDirective('delay', options, section, config.getint)
             else:
                 match = regex.search(section)
                 if match == None:
                     raise Exception(_('section {0} is not allowed in this file.').format('[' + section + ']'))
                 options = config.options(section)
                 _checkAlienDirectives(['type', 'user', 'password'], options, section)
-                _mandatoryDirective('type', options, section)
-                _mandatoryDirective('user', options, section)
-                _mandatoryDirective('password', options, section)
                 ssid = Values()
                 ssid.ssid = match.group(1).strip()
-                ssid.authPlugin = config.get(section, 'type')
-                ssid.user = config.get(section, 'user')
-                ssid.password = config.get(section, 'password')
-                result.ssids.append(ssid)
+                ssid.authPluginName = _mandatoryDirective('type', options, section, config.get)
+                ssid.user = _mandatoryDirective('user', options, section, config.get)
+                ssid.password = _mandatoryDirective('password', options, section, config.get)
+                try:
+                    ssid.authPlugin = hlm_plugin.load('hlma_' + ssid.authPluginName, hlm_application.getPath() + '/libs/auth', 'auth')
+                    result.ssids[ssid.ssid] = ssid
+                except BaseException as exc:
+                    if __WARNING__: logWarning('Invalid authentication plugin {0} for SSID {1}: {2}'.format(quote(ssid.authPluginName), quote(ssid.ssid), exc))
         if result.ping == None:
+            raise Exception(_('section {0} is missing.').format('[ping]'))
+        if len(result.ssids) == 0:
             raise Exception(_('section {0} is missing.').format('[default]'))
 
         if __DEBUG__: logDebug('Credentials configuration has been loaded from {0}.'.format(configFile))
@@ -124,9 +127,10 @@ def _checkAlienDirectives(allowedOptions, options, section):
 
 
 #-----------------------------------------------------------------------------
-def _mandatoryDirective(directive, options, section):
+def _mandatoryDirective(directive, options, section, getter):
     if directive not in options:
         raise Exception(_('directive {0} is missing in section {1}.').format(quote(directive), '[' + section + ']'))
+    return getter(section, directive)
 
 
 #-----------------------------------------------------------------------------

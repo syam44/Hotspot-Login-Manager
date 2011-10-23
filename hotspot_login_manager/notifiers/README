@@ -1,7 +1,0 @@
-This directory contains executable programs that are used as notifier backends for unpriviledged users.
-See option --notifier.
-
-Whatever executable program that is dropped here will appear in the available backends.
-When a notification happens, HLM will call the selected backend with the notification message as the first (and only) argument so that the backend can display the notification to the end-user. The message may span across multiple lines. If the argument is empty the backend must return whether it is supported by the particular user session (exit code 0) or not (exit code 1).
-
-If you happen to use a notification system that is not already provided by HLM, please notify us so we can add it! And if you can write the code it's even better: a new unknown environment is always a hassle to install and configure so the priority will probably be low for us, while your working code will get included quite fast.

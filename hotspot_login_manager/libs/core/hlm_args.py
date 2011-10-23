@@ -20,7 +20,7 @@ import sys
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_globals
 from hotspot_login_manager.libs.core import hlm_paths
-from hotspot_login_manager.libs.notifier import hlm_backends
+from hotspot_login_manager.libs.notifier import hlm_backend
 
 
 #-----------------------------------------------------------------------------
@@ -52,12 +52,7 @@ def exitWithError(error):
 def _parse():
     ''' Perform the actual arguments parsing.
     '''
-    # Double-pass arguments checking to reduce performance hit when many notification backends are available
-    #   --notifier option requires double-pass if the provided backend is not available
-    #   --help always requires double-pass in order to display the available backends
-    (parser, options) = _parseArgs(ignoreNotifier = True)
-    if (options.displayHelp == True) or (options.runNotifier and (not hlm_backends.isAvailableBackend(options.notifierBackend))):
-        (parser, options) = _parseArgs(ignoreNotifier = False)
+    (parser, options) = _parseArgs()
 
     # Handle --help and --version and exit immediately
     if options.displayHelp or options.displayVersion:
@@ -94,6 +89,8 @@ def _parse():
                          'Incompatible options: {0} can only be used in combination with {1}.',
                          len(optionNames))
                         .format(quote(optionNames), quote('--daemon')))
+    if options.runNotifier and not hlm_backend.isAvailable():
+        exitWithError(_('{0} is not available on your system, you cannot run a notifier daemon.').format(quote('notify-send')))
 
     # Apply default values
     if options.logLevel == None:
@@ -107,7 +104,7 @@ def _parse():
 
 
 #-----------------------------------------------------------------------------
-def _parseArgs(ignoreNotifier):
+def _parseArgs():
     ''' Parse the command-line arguments, optionally ignoring the notification backend choices.
     '''
     parser = OptionParser(usage = _('Usage: %prog OPTIONS'), add_help_option = False)
@@ -121,7 +118,6 @@ def _parseArgs(ignoreNotifier):
                         runStatus = False,
                         # Notification daemon
                         runNotifier = False,
-                        notifierBackend = None,
                         # System daemon
                         runDaemon = False,
                         daemonConfig = None,
@@ -150,21 +146,15 @@ def _parseArgs(ignoreNotifier):
 
     group = OptionGroup(parser, _('Notification daemon options'),
                                 _('This daemon can be run under an unprivileged account.'))
-    # Double-pass arguments checking to reduce performance hit when many notification backends are available
-    # We don't want to check every single backend if the user doesn't ask that
-    if ignoreNotifier:
-        availableNotifierBackends = None
-        notifierBackendsMessage = ''
-    else:
-        availableNotifierBackends = hlm_backends.getAvailableBackends()
-        if availableNotifierBackends != []:
-            notifierBackendsMessage = _('Available notification backends for your current user session are: {0}').format(quote(availableNotifierBackends))
-        else:
-            notifierBackendsMessage = _('There isn\'t any available notification backend for your current user session. You cannot run a notifier daemon.')
 
-    group.add_option('-n', '--notifier', metavar = _('BACKEND'),
-                     help = _('Run in the background and display end-user notifications using the BACKEND method.') + ' ' + notifierBackendsMessage,
-                     choices = availableNotifierBackends, dest = 'notifierBackend')
+    if hlm_backend.isAvailable():
+        notifierBackendMessage = ''
+    else:
+        notifierBackendMessage = ' ' + _('Unfortunately {0} is not available on your system. You cannot run a notifier daemon.').format(quote('notify-send'))
+
+    group.add_option('-n', '--notifier',
+                     help = _('Run in the background and display end-user desktop notifications using {0}.').format(quote('notify-send')) + notifierBackendMessage,
+                     dest = 'runNotifier', action = "store_true")
     parser.add_option_group(group)
 
     group = OptionGroup(parser, _('System daemon options'),
@@ -189,8 +179,6 @@ def _parseArgs(ignoreNotifier):
 
     (options, strayArgs) = parser.parse_args()
 
-    # Boolean runNotifier value to handle sanity checks more easily
-    options.runNotifier = (options.notifierBackend != None)
     # Store stray args in the options
     options.strayArgs = strayArgs
 

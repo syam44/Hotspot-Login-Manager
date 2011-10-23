@@ -16,12 +16,13 @@
 import atexit
 import os
 import socket
-import sys
 #
 from hotspot_login_manager.libs.core import hlm_daemonize
 from hotspot_login_manager.libs.core import hlm_paths
 from hotspot_login_manager.libs.core import hlm_pidfile
+from hotspot_login_manager.libs.daemon import hlm_auth
 from hotspot_login_manager.libs.daemon import hlm_config
+from hotspot_login_manager.libs.daemon import hlm_controlsocket
 
 
 #-----------------------------------------------------------------------------
@@ -38,11 +39,11 @@ def _createSpecialFiles(keepFiles):
     pidFile = hlm_paths.pidFile()
     pidDir = os.path.dirname(pidFile)
     try:
-        os.mkdir(pidDir, 0o755)
+        os.mkdir(pidDir, 0o1755)
     except OSError as exc:
         if exc.errno != 17:
             raise
-        os.chmod(pidDir, 0o755)
+        os.chmod(pidDir, 0o1755)
     hlm_pidfile.createPIDFile(pidFile)
 
     # Create the client control socket
@@ -56,6 +57,7 @@ def _createSpecialFiles(keepFiles):
     global _controlSocket
     _controlSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     _controlSocket.bind(socketFile)
+    os.chmod(socketFile, 0o666)
     keepFiles.append(_controlSocket.fileno())
     atexit.register(_closeControlSocket)
     if __DEBUG__: logDebug('Created notification socket {0}.'.format(socketFile))
@@ -89,36 +91,19 @@ def main(args):
 
     # Daemonize the process
     hlm_daemonize.daemonize(
-                            umask = 0o022,
+                            umask = 0,
                             hookPreChangeOwner = _createSpecialFiles,
                             uid = user,
                             gid = group,
                            )
 
-    import time
-    from hotspot_login_manager.libs.daemon import hlm_wireless
-    #
+    authenticator = hlm_auth.Authenticator(credentials)
+
+    _controlSocket.listen(2)
+    if __INFO__: logInfo('HLM system daemon is up and running.')
     while True:
-        wirelessIfaces = hlm_wireless.getInterfaces()
-        logInfo('Wireless interfaces:', str(wirelessIfaces))
-        for iface in wirelessIfaces:
-            logInfo('   ', iface, '=', hlm_wireless.getSSID(iface))
-        time.sleep(30)
-
-
-    s.listen(1)
-    conn, addr = s.accept()
-    while 1:
-        data = conn.recv(1024)
-        if not data:
-            break
-        conn.send(data)
-    conn.close()
-
-
-    raise NotImplementedError('NOT IMPLEMENTED: --daemon')
-
-    sys.exit(0)
+        (socket, address) = _controlSocket.accept()
+        socket = hlm_controlsocket.ControlSocket(socket, authenticator)
 
 
 #-----------------------------------------------------------------------------

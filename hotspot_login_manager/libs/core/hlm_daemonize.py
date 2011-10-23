@@ -55,12 +55,12 @@ def cleanExit(signalNumber, stackFrame):
     ''' Signal handler for exiting the daemon cleanly.
     '''
     if __INFO__:
-        signalName = 'unknown'
+        signalName = 'UNKNOWN'
         for (name, value) in vars(signal).items():
             if value == signalNumber:
                 signalName = name
                 break
-        logInfo('Received signal {0} ({1}), exiting.'.format(signalNumber, signalName))
+        logInfo('Received signal {0} ({1}), exiting.'.format(signalName, signalNumber))
     sys.exit(0)
 
 
@@ -175,7 +175,7 @@ def ensureCanonicalCommandLine():
             else:
                 os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig, '--credentials', args.daemonCredentials)
         elif args.runNotifier:
-            os.execl(exeName, exeName, ':', '--notifier', args.notifierBackend, '--log', args.logLevel)
+            os.execl(exeName, exeName, ':', '--notifier', '--log', args.logLevel)
         else:
             raise FatalError('[BUG] Unexpected combination of command-line arguments (should never happen).')
 
