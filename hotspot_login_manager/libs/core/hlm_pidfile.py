@@ -27,7 +27,9 @@ def readPID(path):
     try:
         with open(path, 'r') as pidfile:
             return int(pidfile.readline())
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
     return None
 
@@ -39,12 +41,14 @@ def createPIDFile(path):
     try:
         pid = _PIDFile(path)
         if __DEBUG__: logDebug('Created PID file {0} with PID {1}.'.format(quote(path), os.getpid()))
+    except SystemExit:
+        raise
     except OSError as exc:
-        if exc.errno == 2:
+        if exc.errno == 2: # File does not exist
             raise FatalError(_('Can\'t write the PID lock file {0}: directory {1} does not exist.').format(quote(path), quote(os.path.dirname(path))))
-        if exc.errno == 13:
+        if exc.errno == 13: # Permission denied
             raise FatalError(_('Can\'t write the PID lock file {0}: permission denied.').format(quote(path)))
-        if exc.errno == 17:
+        if exc.errno == 17: # File already exists
             raise FatalError(_('The PID lock file {0} already exists. Is another instance of HLM already running?').format(quote(path)))
         raise FatalError(_('Can\'t write the PID lock file {0}: {1}').format(quote(path)))
 
@@ -67,7 +71,9 @@ class _PIDFile(object):
     def __deleteFile(self):
         try:
             os.remove(self.__path)
-        except:
+        except SystemExit:
+            raise
+        except BaseException:
             pass
 
 
@@ -87,7 +93,9 @@ def _tryCreateFile(path, raiseError):
         finally:
             if pidfile_fd != None:
                 os.close()
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         if raiseError:
             raise
     return False
@@ -112,7 +120,9 @@ def _deleteIfStaleFile(path):
             if (isCanonical == None) or (isCanonical == False):
                 if __DEBUG__: logDebug('The PID file is stale, removing it...')
                 os.remove(path)
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
 
 

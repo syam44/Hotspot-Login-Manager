@@ -15,13 +15,23 @@
 #-----------------------------------------------------------------------------
 import sys
 #
+from hotspot_login_manager.libs.notifier import hlm_clientsocket
 
 
 #-----------------------------------------------------------------------------
 def main(args):
-    raise NotImplementedError('NOT IMPLEMENTED: --status')
-
-    sys.exit(0)
+    socket = hlm_clientsocket.ClientSocket()
+    try:
+        socket.write('status')
+        while True:
+            message = socket.readline()
+            if message == '':
+                break
+            else:
+                print(message)
+    finally:
+        socket.close()
+        sys.exit(0)
 
 
 #-----------------------------------------------------------------------------

@@ -40,7 +40,7 @@ msgstr ""
 EOF
 
 # Extract strings, remove default header (we already have one), and append to existing header
-./devtools/pygettext/pygettext3.1-patched --output=- ./hotspot-login-manager $PY_FILES | tail -n +17 >>"$MESSAGES_POT.tmp"
+./devtools/pygettext/pygettext3.1-patched --output=- $PY_FILES | tail -n +17 >>"$MESSAGES_POT.tmp"
 
 # Do not replace the .pot file if there are no changes (avoids bumping the POT-Creation-Date field, which helps versioning)
 filter_pot()

@@ -191,6 +191,8 @@ def _lookupOwnerIds(uid, gid):
             _uid = os.getuid()
         elif not isinstance(_uid, int):
             _uid = pwd.getpwnam(_uid).pw_uid
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('No user named {0} has been found: {1}').format(quote(uid), exc))
 
@@ -201,6 +203,8 @@ def _lookupOwnerIds(uid, gid):
             _gid = os.getgid()
         elif not isinstance(_gid, int):
             _gid = grp.getgrnam(gid).gr_gid
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('No group named {0} has been found: {1}').format(quote(gid), exc))
 

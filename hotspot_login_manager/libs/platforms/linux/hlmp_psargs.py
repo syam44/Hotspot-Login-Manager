@@ -37,7 +37,9 @@ def _getProcessArguments(pid):
         match = _processArgsResult.search(result)
         if match != None:
             return match.group(1)
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
     return None
 
@@ -55,7 +57,9 @@ def _ourCanonicalCommandLinePrefix():
                 shebang = re.search('^#!(.*)$', shebang)
                 if shebang != None:
                     ccl = shebang.group(1)
-        except:
+        except SystemExit:
+            raise
+        except BaseException:
             pass
         # Executable name
         ccl += ' ' + hlm_application.getExecutableName() + ' : '

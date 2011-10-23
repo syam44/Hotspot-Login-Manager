@@ -16,7 +16,9 @@
 import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
+from hotspot_login_manager.libs.core import hlm_daemonize
 from hotspot_login_manager.libs.notifier import hlm_backend
+from hotspot_login_manager.libs.notifier import hlm_clientsocket
 
 
 #-----------------------------------------------------------------------------
@@ -24,18 +26,23 @@ def main(args):
     if not hlm_backend.isAvailable():
         sys.exit(1)
 
-    import time
-    #
-    iteration = 0
-    while True:
-        iteration += 1
-        message = _('Notification #{0}\nIt works!').format(iteration)
-        hlm_backend.notify(message, hlm_application.getPath() + '/icons/wireless-connected.png')
-        time.sleep(5)
+    # Daemonize the process
+    hlm_daemonize.daemonize()
 
-    raise NotImplementedError('NOT IMPLEMENTED: --notifier')
-
-    sys.exit(0)
+    socket = hlm_clientsocket.ClientSocket()
+    if __INFO__: logInfo('Notifier daemon is up and running.')
+    try:
+        socket.write('notify')
+        while True:
+            message = socket.readline()
+            if message == '':
+                break
+            # TODO: message parser
+            hlm_backend.notify(message, hlm_application.getPath() + '/icons/wireless-connected.png')
+    finally:
+        if __INFO__: logInfo('Notifier daemon is shutting down...')
+        socket.close()
+        sys.exit(0)
 
 
 #-----------------------------------------------------------------------------

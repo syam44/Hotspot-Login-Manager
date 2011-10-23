@@ -13,11 +13,7 @@
 
 
 #-----------------------------------------------------------------------------
-import os
-import re
 import subprocess
-#
-from hotspot_login_manager.libs.core import hlm_application
 
 
 #-----------------------------------------------------------------------------
@@ -29,9 +25,12 @@ def isAvailable():
             result = subprocess.check_output(['which', 'notify-send']).decode()
             if result.endswith('/notify-send\n'):
                 isAvailable.__cache = True
-        except:
+                return isAvailable.__cache
+        except SystemExit:
+            raise
+        except BaseException:
             pass
-        _isAvailable = False
+        isAvailable.__cache = False
     return isAvailable.__cache
 
 
@@ -49,6 +48,9 @@ def notify(message, icon = None):
                 subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
             else:
                 subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
+
+    except SystemExit:
+        raise
     except BaseException as exc:
         if __DEBUG__: logDebug('hlm_backend.notify(): {0}'.format(exc))
 

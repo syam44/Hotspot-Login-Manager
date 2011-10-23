@@ -40,8 +40,10 @@ def _createSpecialFiles(keepFiles):
     pidDir = os.path.dirname(pidFile)
     try:
         os.mkdir(pidDir, 0o1755)
+    except SystemExit:
+        raise
     except OSError as exc:
-        if exc.errno != 17:
+        if exc.errno != 17: # File already exists
             raise
         os.chmod(pidDir, 0o1755)
     hlm_pidfile.createPIDFile(pidFile)
@@ -51,8 +53,10 @@ def _createSpecialFiles(keepFiles):
     try:
         # We can afford to just remove it since the PID file is now an acquired lock
         os.remove(socketFile)
+    except SystemExit:
+        raise
     except OSError as exc:
-        if exc.errno != 2:
+        if exc.errno != 2: # File does not exist
             raise
     global _controlSocket
     _controlSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -70,12 +74,16 @@ def _closeControlSocket():
     try:
         global _controlSocket
         _controlSocket.close()
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
     try:
         socketFile = hlm_paths.controlSocket()
         os.remove(socketFile)
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
 
 

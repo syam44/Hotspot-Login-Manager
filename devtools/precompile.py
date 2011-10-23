@@ -1,3 +1,4 @@
+#!/usr/bin/python3.1 -OO
 # -*- coding:utf-8 -*-
 #
 # hotspot-login-manager
@@ -8,30 +9,20 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Main program for the reauth client.
+# Description: Precompile the sources into .pyo files.
 #
 
 
 #-----------------------------------------------------------------------------
-import sys
-#
-from hotspot_login_manager.libs.notifier import hlm_clientsocket
+import compileall
+import os
 
 
 #-----------------------------------------------------------------------------
-def main(args):
-    socket = hlm_clientsocket.ClientSocket()
-    try:
-        socket.write('reauth')
-        while True:
-            message = socket.readline()
-            if message == '':
-                break
-            else:
-                print(message)
-    finally:
-        socket.close()
-        sys.exit(0)
+if __name__ == '__main__':
+    base_path = os.path.realpath(os.path.dirname(__file__) + '/..')
+    compileall.compile_dir(base_path + '/hotspot_login_manager', 20, quiet = True)
+    compileall.compile_dir(base_path, 0, quiet = True)
 
 
 #-----------------------------------------------------------------------------

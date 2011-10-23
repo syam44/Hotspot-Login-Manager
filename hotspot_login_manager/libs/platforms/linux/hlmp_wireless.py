@@ -58,10 +58,14 @@ def getInterfaces():
         with open('/proc/net/wireless', 'r') as devices:
             for device in devices:
                 try:
-                    ifaces.append(_networkInterfacesRegex.search(line).group(1))
-                except:
+                    ifaces.append(_networkInterfacesRegex.search(device).group(1))
+                except SystemExit:
+                    raise
+                except BaseException:
                     pass
-    except:
+    except SystemExit:
+        raise
+    except BaseException:
         pass
     return ifaces
 
@@ -78,7 +82,9 @@ def getSSID(iface):
             iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
             (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
             return iwpoint.result.tostring().strip('\x00')
-        except:
+        except SystemExit:
+            raise
+        except BaseException:
             pass
     return None
 

@@ -31,7 +31,7 @@ _applicationPath = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) 
 #
 # Full path of the executable entry point.
 #
-_executableName = os.path.realpath(_applicationPath + '/../hotspot-login-manager')
+_executableName = os.path.realpath(_applicationPath + '/../hotspot-login-manager.py')
 
 
 #-----------------------------------------------------------------------------

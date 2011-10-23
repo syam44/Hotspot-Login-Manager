@@ -19,6 +19,7 @@ usage:
 	@echo "Targets:"
 	@echo "    all         Make all project files: version, i18n-pot, i18n-mo"
 	@echo "    clean       Clean intermediary files."
+	@echo "    build       Rebuild intermediary files."
 	@echo "    install     Install hooks and configuration files."
 	@echo "    uninstall   Uninstall hooks only, keep configuration files around."
 	@echo "    purge       Uninstall hooks and DELETE configuration files."
@@ -45,6 +46,18 @@ clean-mo:
 
 clean-pyc:
 	find ./ -type f -name '*.pyc' -print0 | xargs -0 rm 2>/dev/null || true
+	find ./ -type f -name '*.pyo' -print0 | xargs -0 rm 2>/dev/null || true
+
+
+#
+# Rebuild intermediary files
+#
+.PHONY: build
+build: clean-pyc
+	devtools/precompile.py
+	find ./ -name '*.py' -print0 | xargs -0 chmod a-ws,a+r,u+w
+	find ./ -name '*.pyo' -print0 | xargs -0 chmod a-ws,a+r,u+w
+	find ./hotspot_login_manager -type d -print0 | xargs -0 chmod a-ws,a+rx,u+w
 
 
 #

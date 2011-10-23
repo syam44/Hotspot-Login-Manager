@@ -33,23 +33,28 @@ class Authenticator(threading.Thread):
     #-----------------------------------------------------------------------------
     def run(self):
         while True:
-            ifaces = hlm_wireless.getInterfaces()
-            if __DEBUG__: logDebug('Checking available wireless interfaces: {0}'.format(str(ifaces)))
-            watched = None
-            ssid_keys = self.__credentials.ssids.keys()
-            for iface in ifaces:
-                ssid = hlm_wireless.getSSID(iface)
-                if ssid not in ssid_keys:
-                    watched = self.__credentials.ssids[ssid]
-                    if __DEBUG__: logDebug('Interface {0} with SSID {1} is available and has attached credentials.'.format(quote(iface), quote(ssid)))
-                    break
-                else:
-                    if __DEBUG__: logDebug('Interface {0} with SSID {1} has no attached credentials.'.format(quote(iface), quote(ssid)))
+            try:
+                ifaces = hlm_wireless.getInterfaces()
+                if __DEBUG__: logDebug('Checking available wireless interfaces: {0}'.format(str(ifaces)))
+                watched = None
+                ssid_keys = self.__credentials.ssids.keys()
+                for iface in ifaces:
+                    ssid = hlm_wireless.getSSID(iface)
+                    if ssid not in ssid_keys:
+                        watched = self.__credentials.ssids[ssid]
+                        if __DEBUG__: logDebug('Interface {0} with SSID {1} is available and has attached credentials.'.format(quote(iface), quote(ssid)))
+                        break
+                    else:
+                        if __DEBUG__: logDebug('Interface {0} with SSID {1} has no attached credentials.'.format(quote(iface), quote(ssid)))
 
-            if watched != None:
-                # TODO: ping / authenticate
-                pass
+                if watched != None:
+                    # TODO: ping / authenticate
+                    pass
 
+            except SystemExit:
+                raise
+            except BaseException as exc:
+                if __DEBUG__: logDebug('hlm_auth.Authenticator.run(): {0}'.format(exc))
             # Wait for the next event
             self.wakeUp.clear()
             self.wakeUp.wait(self.__credentials.delay)

@@ -33,29 +33,50 @@ class ControlSocket(threading.Thread):
     #-----------------------------------------------------------------------------
     def run(self):
         try:
-            if __DEBUG__: logDebug('Control socket got a connection (#{0}).'.format(socket.fileno()))
+            if __DEBUG__: logDebug('Control socket got a connection (#{0}).'.format(self.__socket.fileno()))
             self.__socket.settimeout(None)
             self.__file = self.__socket.makefile(mode = 'rw')
-            command = self.__file.readline()
-            if __DEBUG__: logDebug('Control socket #{0} received the command {1}.'.format(socket.fileno(), command))
+            command = self.__file.readline().strip()
+            if __DEBUG__: logDebug('Control socket #{0} received the command {1}.'.format(self.__socket.fileno(), quote(command)))
             if command == 'reauth':
                 self.__authenticator.wakeUp.set()
                 # TODO: reauth tracking
-                pass
+                self.write('reauth engaged')
+
             elif command == 'status':
                 # TODO: status
-                pass
+                self.write('this is the daemon status')
+
             elif command == 'notify':
                 # TODO: notify
-                #while True:
-                pass
-
-            if __DEBUG__: logDebug('Closing control socket #{0}...'.format(socket.fileno()))
-            self.__file.close()
-            self.__socket.shutdown(socket.SHUT_RDWR)
-            self.__socket.close()
+                import time
+                while True:
+                    self.write('hello\nthis is a notification')
+                    time.sleep(5)
+        except SystemExit:
+            pass
+        except socket.error as exc:
+            if exc.errno != 32: # Broken pipe
+                if __WARNING__: logWarning('Control socket error: {0}'.format(exc))
         except BaseException as exc:
             if __WARNING__: logWarning('Control socket error: {0}'.format(exc))
+        finally:
+            try:
+                if __DEBUG__: logDebug('Closing control socket #{0}...'.format(self.__socket.fileno()))
+                self.__file.close()
+                self.__socket.shutdown(socket.SHUT_RDWR)
+                self.__socket.close()
+            except:
+                pass
+
+
+    #-----------------------------------------------------------------------------
+    def write(self, message):
+        messages = message.split('\n')
+        messages = [message.strip() for message in messages]
+        message = ' \n'.join(messages)
+        self.__file.write(message + '\n')
+        self.__file.flush()
 
 
 #-----------------------------------------------------------------------------

@@ -35,6 +35,8 @@ def loadDaemon():
     config = configparser.SafeConfigParser()
     try:
         config.read(configFile)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Can\'t load the daemon configuration file {0}: {1}').format(quote(configFile), exc))
 
@@ -62,6 +64,8 @@ def loadDaemon():
 
         if __DEBUG__: logDebug('Daemon configuration has been loaded from {0}.'.format(configFile))
         return (user, group)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Incorrect daemon configuration file {0}: {1}').format(quote(configFile), exc))
 
@@ -74,6 +78,8 @@ def loadCredentials():
     config = configparser.SafeConfigParser()
     try:
         config.read(configFile)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Can\'t load the credentials configuration file {0}: {1}').format(quote(configFile), exc))
 
@@ -103,6 +109,8 @@ def loadCredentials():
                 try:
                     ssid.authPlugin = hlm_plugin.load('hlma_' + ssid.authPluginName, hlm_application.getPath() + '/libs/auth', 'auth')
                     result.ssids[ssid.ssid] = ssid
+                except SystemExit:
+                    raise
                 except BaseException as exc:
                     if __WARNING__: logWarning('Invalid authentication plugin {0} for SSID {1}: {2}'.format(quote(ssid.authPluginName), quote(ssid.ssid), exc))
         if result.ping == None:
@@ -112,6 +120,8 @@ def loadCredentials():
 
         if __DEBUG__: logDebug('Credentials configuration has been loaded from {0}.'.format(configFile))
         return result
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Incorrect credentials configuration file {0}: {1}').format(quote(configFile), exc))
 

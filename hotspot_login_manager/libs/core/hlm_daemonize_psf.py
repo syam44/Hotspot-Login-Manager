@@ -43,6 +43,8 @@ def preventCoreDump():
     try:
         # Ensure the resource limit exists on this platform, by requesting its current value
         current_core_limit = resource.getrlimit(resource.RLIMIT_CORE)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Your system does not support the RLIMIT_CORE resource limit, could not disable core dumps, exiting: {0}').format(exc))
     # Set hard and soft limits to zero, i.e. no core dump at all
@@ -55,6 +57,8 @@ def setWorkingDir(path):
     '''
     try:
         os.chdir(path)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Unable to change the working directory to {0}, exiting: {1}').format(quote(path), exc))
 
@@ -65,6 +69,8 @@ def setUmask(umask):
     '''
     try:
         os.umask(umask)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Unable to change the file creation mask, exiting: {0}').format(exc))
 
@@ -78,6 +84,8 @@ def setOwner(uid, gid):
     try:
         os.setgid(gid)
         os.setuid(uid)
+    except SystemExit:
+        raise
     except BaseException as exc:
         raise FatalError(_('Unable to change the process owner (UID={0}, GID={1}, exiting: {2}').format(uid, gid, exc))
 
@@ -101,6 +109,8 @@ def detachProcess(detach, hookFirstFork):
             pid = os.fork()
             if pid > 0:
                 os._exit(0)
+        except SystemExit:
+            raise
         except OSError as exc:
             raise FatalError(_('Unable to detach the process: {0} ({1})').format(error, exc))
 
@@ -131,6 +141,8 @@ def closeFiles(keepFiles, maxDescriptors):
         if fd not in excluded:
             try:
                 os.close(fd)
+            except SystemExit:
+                raise
             except OSError as exc:
                 if exc.errno == errno.EBADF:
                     # File descriptor was not open
@@ -210,6 +222,8 @@ def _isSocket(fd):
     file_socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_RAW)
     try:
         socket_type = file_socket.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
+    except SystemExit:
+        raise
     except socket.error as exc:
         exc_errno = exc.args[0]
         if exc_errno != errno.ENOTSOCK:

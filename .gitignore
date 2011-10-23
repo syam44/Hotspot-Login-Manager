@@ -1,5 +1,6 @@
 # Compiled python caches
 *.pyc
+*.pyo
 
 # Compiled .mo gettext catalogs
 hotspot_login_manager/lang/*/*
