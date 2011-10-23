@@ -8,29 +8,29 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Main program for the reauth client.
+# Description: Main program for the status client.
 #
 
 
 #-----------------------------------------------------------------------------
 import sys
 #
-from hotspot_login_manager.libs.notifier import hlm_clientsocket
+from hotspot_login_manager.libs.clients import hlm_clientsocket
 
 
 #-----------------------------------------------------------------------------
 def main(args):
-    socket = hlm_clientsocket.ClientSocket()
+    clientSocket = hlm_clientsocket.ClientSocket()
     try:
-        socket.write('reauth')
+        clientSocket.write('status')
         while True:
-            message = socket.readline()
+            message = clientSocket.readline()
             if message == '':
                 break
             else:
                 print(message)
     finally:
-        socket.close()
+        clientSocket.close()
         sys.exit(0)
 
 

@@ -15,23 +15,28 @@
 #-----------------------------------------------------------------------------
 import sys
 #
-from hotspot_login_manager.libs.notifier import hlm_clientsocket
+from hotspot_login_manager.libs.clients import hlm_clientsocket
 
 
 #-----------------------------------------------------------------------------
 def main(args):
-    socket = hlm_clientsocket.ClientSocket()
     try:
-        socket.write('status')
-        while True:
-            message = socket.readline()
-            if message == '':
-                break
-            else:
-                print(message)
-    finally:
-        socket.close()
-        sys.exit(0)
+        clientSocket = hlm_clientsocket.ClientSocket()
+        try:
+            clientSocket.write('pid')
+            while True:
+                message = clientSocket.readline()
+                if message == '':
+                    break
+                else:
+                    print(int(message))
+                    sys.exit(0)
+        finally:
+            clientSocket.close()
+    except SystemExit:
+        raise
+    except BaseException:
+        sys.exit(1)
 
 
 #-----------------------------------------------------------------------------

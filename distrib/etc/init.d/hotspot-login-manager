@@ -27,7 +27,6 @@ set -e
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="daemon"
 NAME="Hotspot Login Manager"
-PIDFILE="/var/run/hotspot-login-manager/hlm.pid"
 
 # Gracefully exit if the package has been removed.
 test -x "$(which hotspot-login-manager)" || exit 0
@@ -42,7 +41,7 @@ case "$1" in
         ;;
   stop)
         log_daemon_msg "Stopping $DESC" "$NAME... "
-        PID="$(cat "$PIDFILE" 2>/dev/null || echo -n "-")"
+        PID="$(hotspot-login-manager --pid 2>/dev/null || echo -n "-")"
         if [ "$PID" = "-" ]; then
             log_progress_msg "already stopped" && log_end_msg 0
         else

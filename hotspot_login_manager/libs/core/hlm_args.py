@@ -20,7 +20,7 @@ import sys
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_globals
 from hotspot_login_manager.libs.core import hlm_paths
-from hotspot_login_manager.libs.notifier import hlm_backend
+from hotspot_login_manager.libs.clients import hlm_notifierbackend
 
 
 #-----------------------------------------------------------------------------
@@ -64,17 +64,16 @@ def _parse():
     # We don't need the parser anymore
     parser.destroy()
 
-    # Do not accept additional options except a stray ':' to avoid infinite recursion during command-line canonicalization
-    # (cf. core/hlm_daemonize, core/hlm_psargs)
-    if (options.strayArgs != []) and (options.strayArgs != [':']):
+    # Do not accept any additional options
+    if options.strayArgs != []:
         exitWithError(_N('Unknown option:',
                          'Unknown options:',
                          len(options.strayArgs))
                       + ' ' + ' '.join(options.strayArgs))
 
     # Mutually exclusive options
-    mainCommands = quote(['--daemon', '--reauth', '--status', '--notifier'])
-    mainCommandsCount = sum([options.runDaemon, options.runReauth, options.runStatus, options.runNotifier])
+    mainCommands = quote(['--reauth', '--status', '--pid', '--notifier', '--daemon'])
+    mainCommandsCount = sum([options.runReauth, options.runStatus, options.runPID, options.runNotifier, options.runDaemon])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
@@ -89,7 +88,7 @@ def _parse():
                          'Incompatible options: {0} can only be used in combination with {1}.',
                          len(optionNames))
                         .format(quote(optionNames), quote('--daemon')))
-    if options.runNotifier and not hlm_backend.isAvailable():
+    if options.runNotifier and not hlm_notifierbackend.isAvailable():
         exitWithError(_('{0} is not available on your system, you cannot run a notifier daemon.').format(quote('notify-send')))
 
     # Apply default values
@@ -116,6 +115,7 @@ def _parseArgs():
                         # User commands
                         runReauth = False,
                         runStatus = False,
+                        runPID = False,
                         # Notification daemon
                         runNotifier = False,
                         # System daemon
@@ -142,12 +142,15 @@ def _parseArgs():
     group.add_option('-s', '--status',
                      help = _('Display the current status of the system daemon and exit.'),
                      dest = 'runStatus', action = 'store_true')
+    group.add_option('-p', '--pid',
+                     help = _('Display the current PID of the system daemon and exit.'),
+                     dest = 'runPID', action = 'store_true')
     parser.add_option_group(group)
 
     group = OptionGroup(parser, _('Notification daemon options'),
                                 _('This daemon can be run under an unprivileged account.'))
 
-    if hlm_backend.isAvailable():
+    if hlm_notifierbackend.isAvailable():
         notifierBackendMessage = ''
     else:
         notifierBackendMessage = ' ' + _('Unfortunately {0} is not available on your system. You cannot run a notifier daemon.').format(quote('notify-send'))

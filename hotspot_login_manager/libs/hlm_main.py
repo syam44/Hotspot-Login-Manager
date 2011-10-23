@@ -47,17 +47,22 @@ def main():
 
         # --reauth
         if args.runReauth:
-            from hotspot_login_manager.libs.notifier import hlm_main_reauth
+            from hotspot_login_manager.libs.clients import hlm_main_reauth
             hlm_main_reauth.main(args)
 
         # --status
         if args.runStatus:
-            from hotspot_login_manager.libs.notifier import hlm_main_status
+            from hotspot_login_manager.libs.clients import hlm_main_status
             hlm_main_status.main(args)
+
+        # --pid
+        if args.runPID:
+            from hotspot_login_manager.libs.clients import hlm_main_pid
+            hlm_main_pid.main(args)
 
         # --notifier
         if args.runNotifier:
-            from hotspot_login_manager.libs.notifier import hlm_main_notifier
+            from hotspot_login_manager.libs.clients import hlm_main_notifier
             hlm_main_notifier.main(args)
 
     except SystemExit as exc:

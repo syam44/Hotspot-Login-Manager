@@ -33,7 +33,7 @@ class ClientSocket(object):
         except SystemExit:
             raise
         except socket.error as exc:
-            if exc.errno == 2: # File does not exist
+            if exc.errno == 2: # File not found
                 pass
             elif exc.errno == 111: # Connection refused
                 pass

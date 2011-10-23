@@ -13,6 +13,7 @@
 
 
 #-----------------------------------------------------------------------------
+import os
 import socket
 import threading
 
@@ -22,10 +23,10 @@ class ControlSocket(threading.Thread):
     ''' Server-side of the control socket.
     '''
     #-----------------------------------------------------------------------------
-    def __init__(self, socket, authenticator):
-        threading.Thread.__init__(self, name = 'Socket #{0}'.format(socket.fileno()))
+    def __init__(self, controlSocket, authenticator):
+        threading.Thread.__init__(self, name = 'Socket #{0}'.format(controlSocket.fileno()))
         self.daemon = True
-        self.__socket = socket
+        self.__socket = controlSocket
         self.__authenticator = authenticator
         self.start()
 
@@ -38,7 +39,11 @@ class ControlSocket(threading.Thread):
             self.__file = self.__socket.makefile(mode = 'rw')
             command = self.__file.readline().strip()
             if __DEBUG__: logDebug('Control socket #{0} received the command {1}.'.format(self.__socket.fileno(), quote(command)))
-            if command == 'reauth':
+
+            if command == 'pid':
+                self.write(os.getpid())
+
+            elif command == 'reauth':
                 self.__authenticator.wakeUp.set()
                 # TODO: reauth tracking
                 self.write('reauth engaged')
@@ -74,7 +79,7 @@ class ControlSocket(threading.Thread):
     #-----------------------------------------------------------------------------
     def write(self, message):
         # Multiline messages: incomplete lines end with a space + \n
-        messages = message.split('\n')
+        messages = str(message).split('\n')
         messages = [message.strip() for message in messages]
         message = ' \n'.join(messages)
         self.__file.write(message + '\n')

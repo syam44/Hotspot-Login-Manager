@@ -18,27 +18,27 @@ import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_daemonize
-from hotspot_login_manager.libs.notifier import hlm_backend
-from hotspot_login_manager.libs.notifier import hlm_clientsocket
+from hotspot_login_manager.libs.clients import hlm_notifierbackend
+from hotspot_login_manager.libs.clients import hlm_clientsocket
 
 
 #-----------------------------------------------------------------------------
 def main(args):
-    if not hlm_backend.isAvailable():
+    if not hlm_notifierbackend.isAvailable():
         sys.exit(1)
 
-    socket = hlm_clientsocket.ClientSocket()
+    clientSocket = hlm_clientsocket.ClientSocket()
 
     # Daemonize the process
-    hlm_daemonize.daemonize(keepFiles = [socket.fileno()])
+    hlm_daemonize.daemonize(keepFiles = [clientSocket.fileno()])
 
     if __INFO__: logInfo('HLM notifier daemon is up and running.')
     try:
-        socket.write('notify')
+        clientSocket.write('notify')
         regex1 = re.compile('^\\[([^]]+)\\] ')
         regex2 = re.compile('^hlm:(.*)$')
         while True:
-            message = socket.readline()
+            message = clientSocket.readline()
             if message == '':
                 break
             icon = 'dialog-information'
@@ -49,10 +49,10 @@ def main(args):
                 match = regex2.search(icon)
                 if match != None:
                     icon = hlm_application.getPath() + '/icons/' + match.group(1) + '.png'
-            hlm_backend.notify(message, icon)
+            hlm_notifierbackend.notify(message, icon)
     finally:
-        if __INFO__: logInfo('Notifier daemon is shutting down...')
-        socket.close()
+        if __INFO__: logInfo('HLM notifier daemon is shutting down...')
+        clientSocket.close()
         sys.exit(0)
 
 

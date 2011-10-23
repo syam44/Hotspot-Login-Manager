@@ -23,7 +23,6 @@ from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_daemonize_psf
 from hotspot_login_manager.libs.core import hlm_log
-from hotspot_login_manager.libs.core import hlm_psargs
 #
 from hotspot_login_manager.libs.core import hlm_platform
 hlm_platform.install(vars(), 'rlimit_files')
@@ -89,8 +88,6 @@ def daemonize(
               stdout = None,                # File/fileno that is rebound to stdout (mode w+).
               stderr = None,                # File/fileno that is rebound to stderr (mode w+).
 
-              hookPreChangeOwner = None,    # Function that will be called just before the process owner is changed.
-                                            # It will be called with a keepFiles argument that must be returned (either as-is or modified).
               # privileged options (root)
               uid = None,                   # Change process UID. [*]
               gid = None,                   # Change process GID. [*]
@@ -138,9 +135,6 @@ def daemonize(
     hlm_daemonize_psf.setSignalMap(signals)
     if __DEBUG__: logDebug('Signal handlers have been installed.')
 
-    # hookPreChangeOwner
-    if hookPreChangeOwner != None:
-        keepFiles = hookPreChangeOwner(keepFiles)
     # Change process owner
     (uid, gid) = _lookupOwnerIds(uid, gid)
     hlm_daemonize_psf.setOwner(uid, gid)
@@ -152,32 +146,6 @@ def daemonize(
     # Close file descriptors (we want to keep custom std* streams too)
     hlm_daemonize_psf.closeFiles(keepFiles, maxFileDescriptors())
     if __DEBUG__: logDebug('All irrelevant file descriptors have been closed.')
-
-
-#-----------------------------------------------------------------------------
-def ensureCanonicalCommandLine():
-    ''' Check if we have been called using a canonical command-line, restart
-        properly otherwise.
-    '''
-    isCanonical = hlm_psargs.isCanonicalCommandLine(os.getpid())
-    if isCanonical != True:
-        args = hlm_args.args()
-        # Protect against infinite loops in case of canonicalization failure
-        if args.strayArgs == [':']:
-            raise FatalError('[BUG] Unable to enforce canonical command-line, exiting.')
-
-        if __DEBUG__: logDebug('Relaunching the process using a canonical command-line...')
-        # Restart the daemon with a properly canonicalized command-line
-        exeName = hlm_application.getExecutableName()
-        if args.runDaemon:
-            if args.daemonCredentials == None:
-                os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig)
-            else:
-                os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig, '--credentials', args.daemonCredentials)
-        elif args.runNotifier:
-            os.execl(exeName, exeName, ':', '--notifier', '--log', args.logLevel)
-        else:
-            raise FatalError('[BUG] Unexpected combination of command-line arguments (should never happen).')
 
 
 #-----------------------------------------------------------------------------
