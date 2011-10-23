@@ -33,7 +33,6 @@ def isAvailable():
         isAvailable.__cache = False
     return isAvailable.__cache
 
-
 #
 # Cached results
 #
@@ -42,6 +41,8 @@ isAvailable.__cache = None
 
 #-----------------------------------------------------------------------------
 def notify(message, icon = None):
+    ''' Send a desktop notification to the end-user.
+    '''
     if isAvailable.__cache:
         if icon == None:
             subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])

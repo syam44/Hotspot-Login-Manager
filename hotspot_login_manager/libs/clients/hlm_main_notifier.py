@@ -13,6 +13,7 @@
 
 
 #-----------------------------------------------------------------------------
+import os
 import re
 import sys
 #
@@ -35,20 +36,29 @@ def main(args):
     if __INFO__: logInfo('HLM notifier daemon is up and running.')
     try:
         clientSocket.write('notify')
-        regex1 = re.compile('^\\[([^]]+)\\] ')
-        regex2 = re.compile('^hlm:(.*)$')
+        #
+        # Regexes for parsing the notifications:
+        # If a notification starts with [...] then the "..." is supposed
+        # to be an icon that we will pass to notify-send.
+        # Icons are taken from the hotspot_login_manager/icons directory.
+        #
+        regex = re.compile('^\\[([^]/]+)\\] ')
+        #
         while True:
-            message = clientSocket.readline()
+            message = clientSocket.readMessage()
             if message == '':
                 break
-            icon = 'dialog-information'
-            match = regex1.search(message)
+            # Default icon
+            icon = None
+            match = regex.search(message)
             if match != None:
-                icon = match.group(1)
-                message = message[len(icon)+3:]
-                match = regex2.search(icon)
-                if match != None:
-                    icon = hlm_application.getPath() + '/icons/' + match.group(1) + '.png'
+                # We found [icon], check it and adjust the message
+                iconName = match.group(1)
+                iconPath = hlm_application.getPath() + '/icons/' + iconName + '.png'
+                if os.path.isfile(iconPath):
+                    icon = iconPath
+                    message = message[len(iconName)+3:]
+            # Send the notification to the end-user
             hlm_notifierbackend.notify(message, icon)
     finally:
         if __INFO__: logInfo('HLM notifier daemon is shutting down...')

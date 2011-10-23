@@ -45,13 +45,17 @@ class ClientSocket(object):
 
 
     #-----------------------------------------------------------------------------
-    def readline(self):
+    def readMessage(self):
+        ''' Receive a possibly multiline message from the system daemon.
+            If a message spans over multiple lines, each line except the last one
+            will have a space character just before the newline.
+        '''
         try:
             message = self.__file.readline()
             if message.endswith(' \n'):
-                return message.strip() + '\n' + self.readline()
+                return message.rstrip() + '\n' + self.readMessage()
             else:
-                return message.strip()
+                return message.rstrip()
         except SystemExit:
             raise
         except BaseException as exc:
@@ -60,6 +64,8 @@ class ClientSocket(object):
 
     #-----------------------------------------------------------------------------
     def write(self, message):
+        ''' Send a single-line message to the system daemon.
+        '''
         try:
             self.__file.write(message + '\n')
             self.__file.flush()
@@ -71,6 +77,8 @@ class ClientSocket(object):
 
     #-----------------------------------------------------------------------------
     def close(self):
+        ''' Close the communications socket.
+        '''
         try:
             if __DEBUG__: logDebug('Closing client socket #{0}...'.format(self.__socket.fileno()))
             self.__file.close()
@@ -84,11 +92,16 @@ class ClientSocket(object):
 
     #-----------------------------------------------------------------------------
     def fileno(self):
+        ''' Return the socket's fileno() so we can add it to the files we wanna
+            keep when daemonizing the notification daemon (clients/hlm_notifier).
+        '''
         return self.__socket.fileno()
 
 
 #-----------------------------------------------------------------------------
 def _socketError(exc, where, raiseError = True):
+    ''' Convenience function to raise/log an error.
+    '''
     message = 'Client socket error in {0}: {1}'.format(where, exc)
     if raiseError:
         raise FatalError(message)

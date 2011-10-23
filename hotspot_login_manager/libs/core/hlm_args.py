@@ -72,8 +72,8 @@ def _parse():
                       + ' ' + ' '.join(options.strayArgs))
 
     # Mutually exclusive options
-    mainCommands = quote(['--reauth', '--status', '--pid', '--notifier', '--daemon'])
-    mainCommandsCount = sum([options.runReauth, options.runStatus, options.runPID, options.runNotifier, options.runDaemon])
+    mainCommands = quote(['--reauth', '--status', '--providers', '--pid', '--notifier', '--daemon'])
+    mainCommandsCount = sum([options.runReauth, options.runStatus, options.runProviders, options.runPID, options.runNotifier, options.runDaemon])
     if mainCommandsCount == 0:
         exitWithError(_('Missing option: one of {0} must be used.').format(mainCommands))
     if mainCommandsCount > 1:
@@ -115,6 +115,7 @@ def _parseArgs():
                         # User commands
                         runReauth = False,
                         runStatus = False,
+                        runProviders = False,
                         runPID = False,
                         # Notification daemon
                         runNotifier = False,
@@ -142,7 +143,10 @@ def _parseArgs():
     group.add_option('-s', '--status',
                      help = _('Display the current status of the system daemon and exit.'),
                      dest = 'runStatus', action = 'store_true')
-    group.add_option('-p', '--pid',
+    group.add_option('--providers',
+                     help = _('Display the list of available authentication providers and exit.'),
+                     dest = 'runProviders', action = 'store_true')
+    group.add_option('--pid',
                      help = _('Display the current PID of the system daemon and exit.'),
                      dest = 'runPID', action = 'store_true')
     parser.add_option_group(group)
@@ -162,7 +166,7 @@ def _parseArgs():
 
     group = OptionGroup(parser, _('System daemon options'),
                                 _('This daemon must be run under a privileged account.'))
-    group.add_option('-d', '--daemon',
+    group.add_option('--daemon',
                      help = _('Run as a system daemon (unique instance).'),
                      dest = 'runDaemon', action = 'store_true')
     group.add_option('--config', metavar = _('FILE'),

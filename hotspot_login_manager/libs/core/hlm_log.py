@@ -42,7 +42,8 @@ _logger = None
 #-----------------------------------------------------------------------------
 class _Logger(object):
     ''' Log facility with capped logging levels.
-        There should be only one instance of this class in the whole program.
+        There must be only one instance of this class in the whole program, which
+        is enforced by open() / activate() module functions.
     '''
     #-----------------------------------------------------------------------------
     def __init__(self):

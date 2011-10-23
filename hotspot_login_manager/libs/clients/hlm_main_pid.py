@@ -25,10 +25,13 @@ def main(args):
         try:
             clientSocket.write('pid')
             while True:
-                message = clientSocket.readline()
+                message = clientSocket.readMessage()
                 if message == '':
                     break
                 else:
+                    # Coerce the result to an integer.
+                    # If there is a problem this will raise an error, thus avoiding
+                    # the print() altogether and exiting with return code 1 (error).
                     print(int(message))
                     sys.exit(0)
         finally:

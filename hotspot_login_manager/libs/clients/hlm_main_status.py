@@ -23,8 +23,11 @@ def main(args):
     clientSocket = hlm_clientsocket.ClientSocket()
     try:
         clientSocket.write('status')
+        # Simple echo client: once the "status" command has been sent to the
+        # daemon, the client just prints whatever the daemon sends until the
+        # socket is closed.
         while True:
-            message = clientSocket.readline()
+            message = clientSocket.readMessage()
             if message == '':
                 break
             else:

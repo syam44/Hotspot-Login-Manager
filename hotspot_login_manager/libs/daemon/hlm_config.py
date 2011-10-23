@@ -85,10 +85,10 @@ def loadCredentials():
 
     result = Values()
     result.ping = None
-    result.ssids = {}
+    result.auths = []
     try:
         sections = config.sections()
-        regex = re.compile('^ssid *= *(.+)$')
+        regex = re.compile('^provider *= *([a-zA-Z0-9_]+)$')
         for section in sections:
             if section == 'ping':
                 options = config.options('ping')
@@ -100,23 +100,22 @@ def loadCredentials():
                 if match == None:
                     raise Exception(_('section {0} is not allowed in this file.').format('[' + section + ']'))
                 options = config.options(section)
-                _checkAlienDirectives(['type', 'user', 'password'], options, section)
-                ssid = Values()
-                ssid.ssid = match.group(1).strip()
-                ssid.authPluginName = _mandatoryDirective('type', options, section, config.get)
-                ssid.user = _mandatoryDirective('user', options, section, config.get)
-                ssid.password = _mandatoryDirective('password', options, section, config.get)
+                _checkAlienDirectives(['user', 'password'], options, section)
+                auth = Values()
+                auth.pluginName = match.group(1).strip()
+                auth.user = _mandatoryDirective('user', options, section, config.get)
+                auth.password = _mandatoryDirective('password', options, section, config.get)
                 try:
-                    ssid.authPlugin = hlm_plugin.load('hlma_' + ssid.authPluginName, hlm_application.getPath() + '/libs/auth', 'auth')
-                    result.ssids[ssid.ssid] = ssid
+                    auth.pluginModule = hlm_plugin.load('hlma_' + auth.pluginName, hlm_application.getPath() + '/libs/auth', 'auth')
+                    result.auths.append(auth)
                 except SystemExit:
                     raise
                 except BaseException as exc:
-                    if __WARNING__: logWarning('Invalid authentication plugin {0} for SSID {1}: {2}'.format(quote(ssid.authPluginName), quote(ssid.ssid), exc))
+                    if __WARNING__: logWarning('Invalid authentication provider {0}: {1}'.format(quote(auth.pluginName), exc))
         if result.ping == None:
             raise Exception(_('section {0} is missing.').format('[ping]'))
-        if len(result.ssids) == 0:
-            raise Exception(_('section {0} is missing.').format('[default]'))
+        if result.auths == []:
+            raise Exception(_('no configured credentials, exiting.'))
 
         if __DEBUG__: logDebug('Credentials configuration has been loaded from {0}.'.format(configFile))
         return result

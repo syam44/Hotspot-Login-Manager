@@ -40,31 +40,45 @@ def main():
         hotspot_login_manager.libs.core.hlm_globals.setLogLevel(args.logLevel)
         if __DEBUG__: logDebug('Debugging mode is on.')
 
+
+        #-----------------------------------------------------------------------------
         # --daemon
         if args.runDaemon:
             from hotspot_login_manager.libs.daemon import hlm_main_daemon
             hlm_main_daemon.main(args)
 
+        #-----------------------------------------------------------------------------
         # --reauth
         if args.runReauth:
             from hotspot_login_manager.libs.clients import hlm_main_reauth
             hlm_main_reauth.main(args)
 
+        #-----------------------------------------------------------------------------
         # --status
         if args.runStatus:
             from hotspot_login_manager.libs.clients import hlm_main_status
             hlm_main_status.main(args)
 
+        #-----------------------------------------------------------------------------
+        # --providers
+        if args.runProviders:
+            from hotspot_login_manager.libs.clients import hlm_main_providers
+            hlm_main_providers.main(args)
+
+        #-----------------------------------------------------------------------------
         # --pid
         if args.runPID:
             from hotspot_login_manager.libs.clients import hlm_main_pid
             hlm_main_pid.main(args)
 
+        #-----------------------------------------------------------------------------
         # --notifier
         if args.runNotifier:
             from hotspot_login_manager.libs.clients import hlm_main_notifier
             hlm_main_notifier.main(args)
 
+
+    #-----------------------------------------------------------------------------
     except SystemExit as exc:
         sys.exit(exc.code)
 
