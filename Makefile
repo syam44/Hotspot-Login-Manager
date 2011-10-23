@@ -17,12 +17,13 @@
 .PHONY: usage
 usage:
 	@echo "Targets:"
-	@echo "    all         Make all project files: version, i18n-pot, i18n-mo"
-	@echo "    clean       Clean intermediary files."
-	@echo "    build       Rebuild intermediary files."
 	@echo "    install     Install hooks and configuration files."
 	@echo "    uninstall   Uninstall hooks only, keep configuration files around."
 	@echo "    purge       Uninstall hooks and DELETE configuration files."
+	@echo
+	@echo "    all         Make all project files: version, i18n-pot, i18n-mo, build"
+	@echo "    clean       Clean intermediary files."
+	@echo "    build       Rebuild intermediary files."
 	@echo
 	@echo "    i18n-mo     Generate .mo catalog files (program translations) from existing .po translated files."
 	@echo "    i18n-pot    Generate .pot translation model."
@@ -32,7 +33,7 @@ usage:
 #
 # Make all project files
 #
-all: version i18n-pot i18n-mo
+all: version i18n-pot i18n-mo build
 
 
 #
@@ -55,8 +56,10 @@ clean-pyc:
 .PHONY: build
 build: clean-pyc
 	devtools/precompile.py
+	chmod a-ws,a+rx,u+w ./hotspot-login-manager.py
 	find ./ -name '*.py' -print0 | xargs -0 chmod a-ws,a+r,u+w
 	find ./ -name '*.pyo' -print0 | xargs -0 chmod a-ws,a+r,u+w
+	find ./ -name '*.mo' -print0 | xargs -0 chmod a-ws,a+r,u+w 2>/dev/null || true
 	find ./hotspot_login_manager -type d -print0 | xargs -0 chmod a-ws,a+rx,u+w
 
 
@@ -64,7 +67,7 @@ build: clean-pyc
 # Install hooks and configuration files
 #
 .PHONY: install
-install:
+install: build
 	devtools/make-install install
 
 

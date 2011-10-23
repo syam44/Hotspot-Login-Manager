@@ -35,9 +35,7 @@ case "$1" in
         mkdir -p "/etc/hotspot-login-manager"
         installFile a-rwxs,u+rw "/etc/hotspot-login-manager/daemon.conf"
         installFile a-rwxs,u+rw "/etc/hotspot-login-manager/credentials.conf"
-        chmod a-ws,a+rx,u+w ./hotspot-login-manager
         ln -s "$(readlink -f ./hotspot-login-manager.py)" /usr/local/bin/hotspot-login-manager
-        make build
         # FIXME: update-rc.d hotspot-login-manager defaults
         # FIXME: /etc/init.d/hotspot-login-manager start
         ;;
