@@ -53,6 +53,7 @@ class ControlSocket(threading.Thread):
                 while True:
                     self.write('[hlm:wireless-connected] hello\nthis is a notification')
                     time.sleep(5)
+
         except SystemExit:
             pass
         except socket.error as exc:

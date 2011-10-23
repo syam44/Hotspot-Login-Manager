@@ -42,17 +42,11 @@ isAvailable.__cache = None
 
 #-----------------------------------------------------------------------------
 def notify(message, icon = None):
-    try:
-        if isAvailable.__cache:
-            if icon == None:
-                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
-            else:
-                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
-
-    except SystemExit:
-        raise
-    except BaseException as exc:
-        if __DEBUG__: logDebug('hlm_backend.notify(): {0}'.format(exc))
+    if isAvailable.__cache:
+        if icon == None:
+            subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
+        else:
+            subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
 
 
 #-----------------------------------------------------------------------------
