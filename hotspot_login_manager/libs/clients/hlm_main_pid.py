@@ -8,7 +8,7 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Main program for the status client.
+# Description: Main program for the PID client.
 #
 
 
