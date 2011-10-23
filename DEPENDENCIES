@@ -1,7 +1,8 @@
 Note: the following dependencies are expressed as Debian package names.
 
-python3.1
-syslog
-
-Linux:
+Depends:
+    python3.1
+    syslog
     procps ("ps" utility)
+Recommends:
+    libnotify-bin ("notify-send" utility)

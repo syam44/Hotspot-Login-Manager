@@ -57,6 +57,7 @@ class _PIDFile(object):
     def __init__(self, path):
         self.__path = path
         if not _tryCreateFile(path, False):
+            if __DEBUG__: logDebug('The PID file already exists, checking if it is a stale one...')
             _deleteIfStaleFile(path)
             _tryCreateFile(path, True)
         atexit.register(self.__deleteFile)
@@ -109,6 +110,7 @@ def _deleteIfStaleFile(path):
         if pid != None:
             isCanonical = hlm_psargs.isCanonicalCommandLine(pid)
             if (isCanonical == None) or (isCanonical == False):
+                if __DEBUG__: logDebug('The PID file is stale, removing it...')
                 os.remove(path)
     except:
         pass

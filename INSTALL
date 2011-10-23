@@ -4,4 +4,3 @@
    $ make i18n-mo
 
 # make install
-# service hotspot-login-manager start

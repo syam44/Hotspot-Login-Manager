@@ -49,8 +49,8 @@ def pidFile():
 
 
 #-----------------------------------------------------------------------------
-def notificationSocket():
-    ''' Return the path for the daemon's client notification socket.
+def controlSocket():
+    ''' Return the path for the daemon's client control socket.
     '''
     return daemonRuntimePath() + '/hlm.socket'
 

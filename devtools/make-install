@@ -37,9 +37,11 @@ case "$1" in
         installFile a-rwxs,u+rw "/etc/hotspot-login-manager/credentials.conf"
         chmod a-ws,a+rx,u+w ./hotspot-login-manager
         ln -s "$(readlink -f ./hotspot-login-manager)" /usr/local/bin/
-        update-rc.d hotspot-login-manager defaults
+        # FIXME: update-rc.d hotspot-login-manager defaults
+        # FIXME: /etc/init.d/hotspot-login-manager start
         ;;
   remove)
+        /etc/init.d/hotspot-login-manager stop || true
         update-rc.d hotspot-login-manager remove || true
         rm "/etc/init.d/hotspot-login-manager" || true
         rm "/etc/network/if-up.d/hotspot-login-manager" || true

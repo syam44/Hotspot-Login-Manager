@@ -44,21 +44,9 @@ def preventCoreDump():
         # Ensure the resource limit exists on this platform, by requesting its current value
         current_core_limit = resource.getrlimit(resource.RLIMIT_CORE)
     except BaseException as exc:
-        raise FatalError(_('Your system does not support the RLIMIT_CORE resource limit, could not disable core dumps. Exiting.\n{0}').format(exc))
+        raise FatalError(_('Your system does not support the RLIMIT_CORE resource limit, could not disable core dumps, exiting: {0}').format(exc))
     # Set hard and soft limits to zero, i.e. no core dump at all
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-
-
-#-----------------------------------------------------------------------------
-def setChroot(path):
-    ''' Change the root directory of the process.
-    '''
-    try:
-        os.chdir(path)
-        os.chroot(path)
-        os.chdir('/')
-    except BaseException as exc:
-        raise FatalError(_('Unable to change the root directory to {0}. Exiting.\n{1}').format(quote(path), exc))
 
 
 #-----------------------------------------------------------------------------
@@ -68,7 +56,7 @@ def setWorkingDir(path):
     try:
         os.chdir(path)
     except BaseException as exc:
-        raise FatalError(_('Unable to change the working directory to {0}. Exiting.\n{1}').format(quote(path), exc))
+        raise FatalError(_('Unable to change the working directory to {0}, exiting: {1}').format(quote(path), exc))
 
 
 #-----------------------------------------------------------------------------
@@ -78,7 +66,7 @@ def setUmask(umask):
     try:
         os.umask(umask)
     except BaseException as exc:
-        raise FatalError(_('Unable to change the file creation mask. Exiting.\n{0}').format(exc))
+        raise FatalError(_('Unable to change the file creation mask, exiting: {0}').format(exc))
 
 
 #-----------------------------------------------------------------------------
@@ -91,7 +79,7 @@ def setOwner(uid, gid):
         os.setgid(gid)
         os.setuid(uid)
     except BaseException as exc:
-        raise FatalError(_('Unable to change the process owner (UID={0}, GID={1}). Exiting.\n{2}').format(uid, gid, exc))
+        raise FatalError(_('Unable to change the process owner (UID={0}, GID={1}, exiting: {2}').format(uid, gid, exc))
 
 
 #-----------------------------------------------------------------------------
@@ -114,7 +102,7 @@ def detachProcess(detach, hookFirstFork):
             if pid > 0:
                 os._exit(0)
         except OSError as exc:
-            raise FatalError(_('Unable to detach the process: {0}\n{1}').format(error, exc))
+            raise FatalError(_('Unable to detach the process: {0} ({1})').format(error, exc))
 
     forkAndExit(_('failed first fork.'))
     os.setsid()
@@ -148,7 +136,7 @@ def closeFiles(keepFiles, maxDescriptors):
                     # File descriptor was not open
                     pass
                 else:
-                    raise FatalError(_('Failed to close file descriptor {0}:\n{1}').format(fd, exc))
+                    raise FatalError(_('Failed to close file descriptor {0}: {1}').format(fd, exc))
 
 
 #-----------------------------------------------------------------------------
@@ -174,7 +162,7 @@ def setSignalMap(signals):
             name = getattr(signal, name)
             if handler == None:
                 handler = signal.SIG_IGN
-            logDebug('{0} ({1}) = {2}'.format(oldname, name, handler))
+            if __DEBUG__: logDebug('Signal {0} ({1}) = {2}'.format(oldname, name, handler))
             signal.signal(name, handler)
 
 

@@ -41,7 +41,6 @@ def defaultSignalsMap():
              'SIGPIPE': None,
              'SIGSEGV': cleanExit,
              'SIGTERM': cleanExit,
-             'SIGCHLD': None,
              'SIGTSTP': None,
              'SIGTTIN': None,
              'SIGTTOU': None,
@@ -70,19 +69,6 @@ def daemonize(
               # unprivileged option (any user)
               preventCoreDump = True,       # If core dumps are allowed the daemon may leak sensitive information.
 
-              #-------------------------------------------------------------
-              # The next options will be protected against core dumps.
-              #-------------------------------------------------------------
-
-              hookPreChroot = None,         # Function that will be called just before the chroot.
-              # privileged option (root)
-              chroot = None,                # Directory to chroot into.
-                                            # IMPORTANT: HLM files must not have their path changed once inside the chroot.
-
-              #-------------------------------------------------------------
-              # The next options will be processed once the chroot is set up.
-              #-------------------------------------------------------------
-
               # unprivileged options (any user)
               workingDir = '/',             # Working directory.
               umask = None,                 # Set umask (None: inherit from parent process, unreliable if the daemon creates files).
@@ -91,8 +77,6 @@ def daemonize(
               # unprivileged options (any user)
               syslogFacility = True,        # True: setup the syslog facility and activate it.
                                             # False: do not use syslog.
-              hookPreDetach = None,         # Function that will be called just before the process is detached (if applicable, syslog facility will be available but not active).
-                                            # It will be called with a single argument (keepFiles) which must be returned either as-is or modified.
               detach = None,                # None : detach the process, except when called from init / inetd
                                             # True: always detach the process
                                             # False: never detach the process
@@ -106,7 +90,7 @@ def daemonize(
               stderr = None,                # File/fileno that is rebound to stderr (mode w+).
 
               hookPreChangeOwner = None,    # Function that will be called just before the process owner is changed.
-                                            # It will be called with a single argument (keepFiles) which must be returned either as-is or modified.
+                                            # It will be called with a keepFiles argument that must be returned (either as-is or modified).
               # privileged options (root)
               uid = None,                   # Change process UID. [*]
               gid = None,                   # Change process GID. [*]
@@ -118,20 +102,10 @@ def daemonize(
              ):
     ''' Turn the process into a well-behaved Unix daemon.
     '''
-    # Canonicalize command-line to allow correct detection of stale PID files
-    _ensureCanonicalCommandLine()
     # Prevent core dumps
     if preventCoreDump:
         hlm_daemonize_psf.preventCoreDump()
-        if __DEBUG__: logDebug('Prevented core dump.')
-
-    # hookPreChroot
-    if hookPreChroot != None:
-        hookPreChroot()
-    # chroot
-    if chroot != None:
-        hlm_daemonize_psf.setChroot(chroot)
-        if __DEBUG__: logDebug('Chrooted to {0}.'.format(quote(chroot)))
+        if __DEBUG__: logDebug('Core dumps are now disabled.')
 
     # Change working directory
     hlm_daemonize_psf.setWorkingDir(workingDir)
@@ -145,9 +119,6 @@ def daemonize(
     if syslogFacility:
         hlm_log.open()
 
-    # hookPreDetach
-    if hookPreDetach != None:
-        keepFiles = hookPreDetach(keepFiles)
     # Detach the process
     if detach != False:
         if __DEBUG__:
@@ -159,16 +130,13 @@ def daemonize(
                 logDebug('The child process (PID {0}) has been detached from its parent (PID {1}).'.format(os.getpid(), oldPID))
             else:
                 logDebug('The process (PID {0}) has been started by init or inetd, no need to detach.'.format(os.getpid()))
+
     # Ensure the syslog facility is active even if we are not detached.
     if syslogFacility:
         hlm_log.activate()
-
     # Set signal map
     hlm_daemonize_psf.setSignalMap(signals)
     if __DEBUG__: logDebug('Signal handlers have been installed.')
-    # std* streams redirects
-    hlm_daemonize_psf.redirectStandardStreams(stdin, stdout, stderr)
-    if __DEBUG__: logDebug('Standard streams have been redirected.')
 
     # hookPreChangeOwner
     if hookPreChangeOwner != None:
@@ -178,13 +146,16 @@ def daemonize(
     hlm_daemonize_psf.setOwner(uid, gid)
     if __DEBUG__: logDebug('Changed process owner to UID={0}, GID={1}.'.format(uid, gid))
 
+    # std* streams redirects
+    hlm_daemonize_psf.redirectStandardStreams(stdin, stdout, stderr)
+    if __DEBUG__: logDebug('Standard streams have been redirected.')
     # Close file descriptors (we want to keep custom std* streams too)
     hlm_daemonize_psf.closeFiles(keepFiles, maxFileDescriptors())
     if __DEBUG__: logDebug('All irrelevant file descriptors have been closed.')
 
 
 #-----------------------------------------------------------------------------
-def _ensureCanonicalCommandLine():
+def ensureCanonicalCommandLine():
     ''' Check if we have been called using a canonical command-line, restart
         properly otherwise.
     '''
@@ -199,7 +170,10 @@ def _ensureCanonicalCommandLine():
         # Restart the daemon with a properly canonicalized command-line
         exeName = hlm_application.getExecutableName()
         if args.runDaemon:
-            os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig, '--credentials', args.daemonCredentials)
+            if args.daemonCredentials == None:
+                os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig)
+            else:
+                os.execl(exeName, exeName, ':', '--daemon', '--log', args.logLevel, '--config', args.daemonConfig, '--credentials', args.daemonCredentials)
         elif args.runNotifier:
             os.execl(exeName, exeName, ':', '--notifier', args.notifierBackend, '--log', args.logLevel)
         else:
@@ -218,7 +192,7 @@ def _lookupOwnerIds(uid, gid):
         elif not isinstance(_uid, int):
             _uid = pwd.getpwnam(_uid).pw_uid
     except BaseException as exc:
-        raise FatalError(_('No user named {0} has been found:\n{1}').format(quote(uid), exc))
+        raise FatalError(_('No user named {0} has been found: {1}').format(quote(uid), exc))
 
     try:
         # Lookup GID
@@ -228,7 +202,7 @@ def _lookupOwnerIds(uid, gid):
         elif not isinstance(_gid, int):
             _gid = grp.getgrnam(gid).gr_gid
     except BaseException as exc:
-        raise FatalError(_('No group named {0} has been found:\n{1}').format(quote(gid), exc))
+        raise FatalError(_('No group named {0} has been found: {1}').format(quote(gid), exc))
 
     return (_uid, _gid)
 
