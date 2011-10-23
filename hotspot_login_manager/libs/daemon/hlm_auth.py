@@ -52,7 +52,7 @@ class Authenticator(threading.Thread):
                     pass
 
             except SystemExit:
-                raise
+                pass
             except BaseException as exc:
                 if __DEBUG__: logDebug('hlm_auth.Authenticator.run(): {0}'.format(exc))
             # Wait for the next event

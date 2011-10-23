@@ -13,6 +13,7 @@
 
 
 #-----------------------------------------------------------------------------
+import re
 import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
@@ -33,12 +34,21 @@ def main(args):
     if __INFO__: logInfo('Notifier daemon is up and running.')
     try:
         socket.write('notify')
+        regex1 = re.compile('^\\[([^]]+)\\] ')
+        regex2 = re.compile('^hlm:(.*)$')
         while True:
             message = socket.readline()
             if message == '':
                 break
-            # TODO: message parser
-            hlm_backend.notify(message, hlm_application.getPath() + '/icons/wireless-connected.png')
+            icon = 'dialog-information'
+            match = regex1.search(message)
+            if match != None:
+                icon = match.group(1)
+                message = message[len(icon)+3:]
+                match = regex2.search(icon)
+                if match != None:
+                    icon = hlm_application.getPath() + '/icons/' + match.group(1) + '.png'
+            hlm_backend.notify(message, icon)
     finally:
         if __INFO__: logInfo('Notifier daemon is shutting down...')
         socket.close()

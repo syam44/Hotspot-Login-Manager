@@ -51,7 +51,7 @@ class ControlSocket(threading.Thread):
                 # TODO: notify
                 import time
                 while True:
-                    self.write('hello\nthis is a notification')
+                    self.write('[hlm:wireless-connected] hello\nthis is a notification')
                     time.sleep(5)
         except SystemExit:
             pass

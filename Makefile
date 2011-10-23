@@ -57,10 +57,13 @@ clean-pyc:
 build: clean-pyc
 	devtools/precompile.py
 	chmod a-ws,a+rx,u+w ./hotspot-login-manager.py
-	find ./ -name '*.py' -print0 | xargs -0 chmod a-ws,a+r,u+w
-	find ./ -name '*.pyo' -print0 | xargs -0 chmod a-ws,a+r,u+w
-	find ./ -name '*.mo' -print0 | xargs -0 chmod a-ws,a+r,u+w 2>/dev/null || true
 	find ./hotspot_login_manager -type d -print0 | xargs -0 chmod a-ws,a+rx,u+w
+	find ./hotspot_login_manager -type f -print0 | xargs -0 chmod a-wxs,a+r,u+w
+	find ./distrib -type d -print0 | xargs -0 chmod a-ws,a+rx,u+w
+	find ./distrib -type f -print0 | xargs -0 chmod a-wxs,a+r,u+w
+	chmod -R g-rwxs,o-rwxs ./distrib/etc/hotspot-login-manager
+	chmod a+rx ./distrib/etc/init.d/hotspot-login-manager
+	chmod a+rx ./distrib/etc/network/if-up.d/hotspot-login-manager
 
 
 #
