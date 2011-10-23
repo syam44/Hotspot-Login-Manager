@@ -42,8 +42,12 @@ case "$1" in
         ;;
   stop)
         log_daemon_msg "Stopping $DESC" "$NAME... "
-        PID="$(cat "$PIDFILE")"
-        kill "$PID" && log_progress_msg "stopped" && log_end_msg 0
+        PID="$(cat "$PIDFILE" 2>/dev/null || echo -n "-")"
+        if [ "$PID" = "-" ]; then
+            log_progress_msg "already stopped" && log_end_msg 0
+        else
+            kill "$PID" && log_progress_msg "stopped" && log_end_msg 0
+        fi
         exit $?
         ;;
   restart|force-reload)

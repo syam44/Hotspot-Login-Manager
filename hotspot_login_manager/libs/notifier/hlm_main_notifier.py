@@ -27,11 +27,12 @@ def main(args):
     if not hlm_backend.isAvailable():
         sys.exit(1)
 
-    # Daemonize the process
-    hlm_daemonize.daemonize()
-
     socket = hlm_clientsocket.ClientSocket()
-    if __INFO__: logInfo('Notifier daemon is up and running.')
+
+    # Daemonize the process
+    hlm_daemonize.daemonize(keepFiles = [socket.fileno()])
+
+    if __INFO__: logInfo('HLM notifier daemon is up and running.')
     try:
         socket.write('notify')
         regex1 = re.compile('^\\[([^]]+)\\] ')

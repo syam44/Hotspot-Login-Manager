@@ -45,6 +45,7 @@ def _createSpecialFiles(keepFiles):
     except OSError as exc:
         if exc.errno != 17: # File already exists
             raise
+        os.chown(pidDir, os.getuid(), os.getgid())
         os.chmod(pidDir, 0o1755)
     hlm_pidfile.createPIDFile(pidFile)
 

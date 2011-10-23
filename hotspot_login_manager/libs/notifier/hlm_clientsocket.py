@@ -32,6 +32,14 @@ class ClientSocket(object):
             if __DEBUG__: logDebug('Created client socket #{0}.'.format(self.__socket.fileno()))
         except SystemExit:
             raise
+        except socket.error as exc:
+            if exc.errno == 2: # File does not exist
+                pass
+            elif exc.errno == 111: # Connection refused
+                pass
+            else:
+                _socketError(exc, 'connect()')
+            raise FatalError(_('Could not connect to the HLM system daemon. Is it running?'))
         except BaseException as exc:
             _socketError(exc, 'connect()')
 
@@ -72,6 +80,11 @@ class ClientSocket(object):
             raise
         except BaseException as exc:
             _socketError(exc, 'close()', False)
+
+
+    #-----------------------------------------------------------------------------
+    def fileno(self):
+        return self.__socket.fileno()
 
 
 #-----------------------------------------------------------------------------

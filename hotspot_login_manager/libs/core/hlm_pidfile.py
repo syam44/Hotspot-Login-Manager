@@ -73,6 +73,9 @@ class _PIDFile(object):
             os.remove(self.__path)
         except SystemExit:
             raise
+        except OSError as exc:
+            if exc.errno == 13: # Permission denied
+                if __WARNING__: logWarning('Unable to delete the PID file: permission denied, most probably because you used the setuid/setgid configuration options.')
         except BaseException:
             pass
 

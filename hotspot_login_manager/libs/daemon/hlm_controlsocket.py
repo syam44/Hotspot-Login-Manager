@@ -73,6 +73,7 @@ class ControlSocket(threading.Thread):
 
     #-----------------------------------------------------------------------------
     def write(self, message):
+        # Multiline messages: incomplete lines end with a space + \n
         messages = message.split('\n')
         messages = [message.strip() for message in messages]
         message = ' \n'.join(messages)
