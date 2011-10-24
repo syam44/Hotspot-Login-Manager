@@ -39,8 +39,7 @@ _WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
 #
 # IOCTL socket
 #
-_ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-_ioctlSocket.settimeout(None)
+_ioctlSocket = None
 
 #
 # Pre-compiled regular expression
@@ -78,15 +77,15 @@ def getSSID(iface):
 
         Uses IOCTLs under the hood.
     '''
-    if iface in getNetworkInterfaces(True):
+    if iface in getInterfaces():
         try:
             iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
             (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
-            return iwpoint.result.tostring().strip('\x00')
+            return iwpoint.result.tostring().decode().strip('\x00')
         except SystemExit:
             raise
-        except BaseException:
-            pass
+        except BaseException as exc:
+            if __DEBUG__: logDebug('linux/hlmp_wireless.getSSID({0}): {1}'.format(iface, exc))
     return None
 
 
@@ -96,7 +95,7 @@ class _IwPoint(object):
     '''
     #-----------------------------------------------------------------------------
     def __init__(self, data, flags = 0):
-        self.result = array.array('c', data)
+        self.result = array.array('B', data.encode())
         (caddr_t, length) = self.result.buffer_info()
         # Format: P pointer to data, H length, H flags
         self.packed = struct.pack('PHH', caddr_t, length, flags)
@@ -107,13 +106,18 @@ def _IW_GetExtension(ifname, ioctlRequest, data = None):
     ''' Read information from ifname.
     '''
     padding = _WE_IFNAMSIZE - len(ifname)
-    request = array.array('c', ifname + ('\0' * padding))
+    request = array.array('B', (ifname + ('\0' * padding)).encode())
     # put some additional data behind the interface name
     if data is not None:
         request.extend(data)
     else:
         padding = 32
         request.extend('\0' * padding)
+
+    global _ioctlSocket
+    if _ioctlSocket == None:
+        _ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        _ioctlSocket.settimeout(None)
 
     result = fcntl.ioctl(_ioctlSocket.fileno(), ioctlRequest, request)
     return (result, request[_WE_IFNAMSIZE:])
