@@ -40,6 +40,7 @@ def _createControlSocket():
         clientSocket = None
         try:
             clientSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            clientSocket.settimeout(None)
             clientSocket.connect(hlm_paths.controlSocket())
             raise FatalError(_('The HLM system daemon seems to be already running.'))
         except SystemExit:
@@ -59,6 +60,7 @@ def _createControlSocket():
         # If we got this far then the socket file is available for us.
         global _controlSocket
         _controlSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        _controlSocket.settimeout(None)
         _controlSocket.bind(socketFile)
         os.chmod(socketFile, 0o666)
         atexit.register(_closeControlSocket)

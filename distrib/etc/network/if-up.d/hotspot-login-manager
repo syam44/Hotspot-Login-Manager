@@ -9,7 +9,7 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Automatic daemon reauthentification whenever an interface goes up or down.
+# Description: Automatic daemon reauthentication whenever an interface goes up or down.
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

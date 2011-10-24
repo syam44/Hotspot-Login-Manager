@@ -25,6 +25,24 @@ from hotspot_login_manager.libs.core import hlm_plugin
 
 
 #-----------------------------------------------------------------------------
+#
+# The minimum ping delay (in seconds) accepted from the credentials configuration.
+#
+_minimumPingDelay = 15
+
+
+#-----------------------------------------------------------------------------
+#
+# The bare minimum ping delay (in seconds).
+# This value is used in daemon/hlm_auth to enforce a minimum waiting time between each
+# try, so we can protect against reauth spamming (which amounts to DoS).
+#
+# Obviously it must be smaller than _minimumPingDelay above.
+#
+antiDosPingDelay = 5
+
+
+#-----------------------------------------------------------------------------
 def loadDaemon():
     ''' Load the daemon configuration file.
     '''
@@ -95,6 +113,9 @@ def loadCredentials():
                 _checkAlienDirectives(['site', 'delay'], options, section)
                 result.ping = _mandatoryDirective('site', options, section, config.get)
                 result.delay = _mandatoryDirective('delay', options, section, config.getint)
+                if result.delay < _minimumPingDelay:
+                    if __WARNING__: logWarning(_('Ping interval {0} is way too low ({1} seconds), forcing it to {2} seconds.').format(quote('delay'), result.delay, _minimumPingDelay))
+                    result.delay = _minimumPingDelay
             else:
                 match = regex.search(section)
                 if match == None:

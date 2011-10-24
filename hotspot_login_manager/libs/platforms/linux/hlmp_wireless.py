@@ -40,6 +40,7 @@ _WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
 # IOCTL socket
 #
 _ioctlSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+_ioctlSocket.settimeout(None)
 
 #
 # Pre-compiled regular expression

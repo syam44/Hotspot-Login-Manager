@@ -16,6 +16,14 @@
 import os
 import socket
 import threading
+#
+from hotspot_login_manager.libs.daemon import hlm_config
+
+
+#-----------------------------------------------------------------------------
+class _ExitFromSocket(BaseException):
+    ''' Dummy exception class that forces the program flow to close the control socket.
+    '''
 
 
 #-----------------------------------------------------------------------------
@@ -25,9 +33,10 @@ class ControlSocket(threading.Thread):
     #-----------------------------------------------------------------------------
     def __init__(self, controlSocket, authenticator):
         threading.Thread.__init__(self, name = 'Socket #{0}'.format(controlSocket.fileno()))
-        self.daemon = True
         self.__socket = controlSocket
+        self.__socket.settimeout(None)
         self.__authenticator = authenticator
+        self.daemon = True
         self.start()
 
 
@@ -35,7 +44,6 @@ class ControlSocket(threading.Thread):
     def run(self):
         try:
             if __DEBUG__: logDebug('Control socket got a connection (#{0}).'.format(self.__socket.fileno()))
-            self.__socket.settimeout(None)
             self.__file = self.__socket.makefile(mode = 'rw')
             command = self.__file.readline().strip()
             if __DEBUG__: logDebug('Control socket #{0} received the command {1}.'.format(self.__socket.fileno(), quote(command)))
@@ -48,6 +56,10 @@ class ControlSocket(threading.Thread):
 
             #-----------------------------------------------------------------------------
             elif command == 'reauth':
+                if self.__authenticator.antiDosWaiting():
+                    self.write(_('A reauthentication just happened less than {0} seconds ago, please try again later.').format(hlm_config.antiDosPingDelay))
+                    raise _ExitFromSocket()
+
                 self.__authenticator.wakeUp.set()
                 # TODO: reauth tracking
                 self.write('reauth engaged')
@@ -69,6 +81,8 @@ class ControlSocket(threading.Thread):
 
 
         #-----------------------------------------------------------------------------
+        except _ExitFromSocket:
+            pass
         except SystemExit:
             pass
         except socket.error as exc:

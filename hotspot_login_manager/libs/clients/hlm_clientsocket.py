@@ -26,8 +26,8 @@ class ClientSocket(object):
     def __init__(self):
         try:
             self.__socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.__socket.connect(hlm_paths.controlSocket())
             self.__socket.settimeout(None)
+            self.__socket.connect(hlm_paths.controlSocket())
             self.__file = self.__socket.makefile(mode = 'rw')
             if __DEBUG__: logDebug('Created client socket #{0}.'.format(self.__socket.fileno()))
         except SystemExit:
