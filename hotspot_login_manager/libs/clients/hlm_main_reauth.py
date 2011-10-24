@@ -31,7 +31,7 @@ def main(args):
             if message == '':
                 break
             else:
-                print(message)
+                print(message, file = sys.stderr)
     finally:
         clientSocket.close()
         sys.exit(0)

@@ -174,7 +174,7 @@ def setSignalMap(signals):
             name = getattr(signal, name)
             if handler == None:
                 handler = signal.SIG_IGN
-            if __DEBUG__: logDebug('Signal {0} ({1}) = {2}'.format(oldname, name, handler))
+            #if __DEBUG__: logDebug('Signal {0} ({1}) = {2}'.format(oldname, name, handler))
             signal.signal(name, handler)
 
 

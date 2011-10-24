@@ -16,8 +16,6 @@
 import os
 import socket
 import threading
-#
-from hotspot_login_manager.libs.daemon import hlm_config
 
 
 #-----------------------------------------------------------------------------
@@ -57,12 +55,8 @@ class ControlSocket(threading.Thread):
             #-----------------------------------------------------------------------------
             elif command == 'reauth':
                 if self.__authenticator.antiDosWaiting():
-                    self.write(_('A reauthentication just happened less than {0} seconds ago, please try again later.').format(hlm_config.antiDosPingDelay))
-                    raise _ExitFromSocket()
-
+                    self.write(_('A reauthentication just happened, the daemon will handle your request as soon as possible...'))
                 self.__authenticator.wakeUp.set()
-                # TODO: reauth tracking
-                self.write('reauth engaged')
 
 
             #-----------------------------------------------------------------------------

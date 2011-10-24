@@ -17,7 +17,7 @@ import threading
 import time
 #
 from hotspot_login_manager.libs.daemon import hlm_config
-from hotspot_login_manager.libs.daemon import hlm_http_redirect
+from hotspot_login_manager.libs.daemon import hlm_http
 from hotspot_login_manager.libs.daemon import hlm_wireless
 
 
@@ -57,12 +57,11 @@ class Authenticator(threading.Thread):
                 ifaces = hlm_wireless.getInterfaces()
                 if __DEBUG__: logDebug('Checking available wireless interfaces: {0}'.format(str(ifaces)))
                 # We don't need to do anything if there is no wireless interface available.
-                # FIXME: this is disabled for development purposes
-                #if ifaces == []:
-                #    raise _WaitForNextEvent()
+                if ifaces == []:
+                    raise _WaitForNextEvent()
 
                 # Do we already have internet access?
-                redirect = hlm_http_redirect.detectRedirect(self.__credentials.ping)
+                redirect = hlm_http.detectRedirect(self.__credentials.ping)
                 if redirect == None:
                     if __DEBUG__: logDebug('URL {0} was not redirected. We have internet access.'.format(quote(self.__credentials.ping)))
                     raise _WaitForNextEvent()
@@ -72,9 +71,18 @@ class Authenticator(threading.Thread):
                 ssids = [hlm_wireless.getSSID(iface) for iface in ifaces]
                 if __DEBUG__: logDebug('Available SSIDs: {0}'.format(ssids))
 
-                #
-                # TODO: find relevant plugin (also provide SSIDs)
-                #
+                # Try each authentication plugin in turn
+                for auth in self.__credentials.auths:
+                    try:
+                        if auth.pluginModule.authenticate(auth.user, auth.password, redirect, ssids, auth.pluginName):
+                            break
+                    except SystemExit:
+                        raise
+                    except hlm_http.CertificateError as exc:
+                        if __WARNING__: logWarning(exc)
+                    except BaseException as exc:
+                        if __DEBUG__: logDebug('hlm_auth.Authenticator.run(plugin {0}): {1}'.format(quote(auth.pluginName), exc))
+
 
             except _WaitForNextEvent:
                 pass
@@ -85,10 +93,9 @@ class Authenticator(threading.Thread):
 
             # Wait for the next event
             time.sleep(hlm_config.antiDosPingDelay)
-            #
             self.__antiDosWaiting = False
-            self.wakeUp.clear()
             self.wakeUp.wait(self.__eventDelay)
+            self.wakeUp.clear()
             self.__antiDosWaiting = True
 
 

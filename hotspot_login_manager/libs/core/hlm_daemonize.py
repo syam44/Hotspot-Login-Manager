@@ -145,7 +145,7 @@ def daemonize(
     if __DEBUG__: logDebug('Standard streams have been redirected.')
     # Close file descriptors (we want to keep custom std* streams too)
     hlm_daemonize_psf.closeFiles(keepFiles, maxFileDescriptors())
-    if __DEBUG__: logDebug('All irrelevant file descriptors have been closed.')
+    if __DEBUG__: logDebug('Unused file descriptors have been closed.')
 
 
 #-----------------------------------------------------------------------------
