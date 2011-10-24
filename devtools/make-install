@@ -30,7 +30,6 @@ case "$1" in
         "$0" remove
         installFile a-ws,a+rx,u+w "/etc/init.d/hotspot-login-manager"
         installFile a-ws,a+rx,u+w "/etc/network/if-up.d/hotspot-login-manager"
-        rm "/etc/network/if-down.d/hotspot-login-manager" 2>/dev/null || true
         ln -s "/etc/network/if-up.d/hotspot-login-manager" "/etc/network/if-down.d/hotspot-login-manager"
         mkdir -p "/etc/hotspot-login-manager"
         chmod a-rwxs,u+rwx "/etc/hotspot-login-manager"

@@ -106,7 +106,7 @@ def loadCredentials():
     result.auths = []
     try:
         sections = config.sections()
-        regex = re.compile('^provider *= *([a-zA-Z0-9_]+)$')
+        regex = re.compile('^provider = ([a-zA-Z0-9_]+)$')
         for section in sections:
             if section == 'ping':
                 options = config.options('ping')
