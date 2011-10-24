@@ -112,9 +112,11 @@ def loadCredentials():
                 options = config.options('ping')
                 _checkAlienDirectives(['site', 'delay'], options, section)
                 result.ping = _mandatoryDirective('site', options, section, config.get)
+                if not result.ping.startswith('http://'):
+                    raise Exception(_('ping website {0} is is incorrect, exiting.').format(quote(result.ping)))
                 result.delay = _mandatoryDirective('delay', options, section, config.getint)
                 if result.delay < _minimumPingDelay:
-                    if __WARNING__: logWarning(_('Ping interval {0} is way too low ({1} seconds), forcing it to {2} seconds.').format(quote('delay'), result.delay, _minimumPingDelay))
+                    if __WARNING__: logWarning(_('Credentials configuration file {0}: ping interval {1} is way too low ({2} seconds), forcing it to {3} seconds.').format(quote(configFile), quote('delay'), result.delay, _minimumPingDelay))
                     result.delay = _minimumPingDelay
             else:
                 match = regex.search(section)
