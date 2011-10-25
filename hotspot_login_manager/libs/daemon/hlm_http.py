@@ -49,7 +49,7 @@ def detectRedirect(url):
         return exc.location
     except SystemExit:
         raise
-    except BaseException:
+    except BaseException as exc:
         pass
     return None
 
@@ -89,7 +89,10 @@ class _RedirectHandler(urllib.request.HTTPRedirectHandler):
     def __redirect(self, headers):
         ''' Raise an error whenever we are redirected.
         '''
-        raise _RedirectError(headers.get('Location'))
+        location = headers.get('Location')
+        if location == None:
+            location = headers.get('URI')
+        raise _RedirectError(location)
 
 
 #-----------------------------------------------------------------------------
@@ -116,33 +119,40 @@ class HTTPSConnection(http.client.HTTPConnection):
         else:
             self.cert_reqs = ssl.CERT_NONE
 
-    def _matchHostname(self, cert, hostname):
-        # Get valid hostnames from the certificate
-        hosts = []
-        if 'subjectAltName' in cert:
-            for rdn in cert['subjectAltName']:
-                if (rdn[0].lower() == 'dns') or (rdn[0][:2].lower() == 'ip'):
-                    hosts.append(rdn[1])
-        if 'subject' in cert:
-            for rdn in cert['subject']:
-                if rdn[0][0].lower() == 'commonname':
-                    hosts.append(rdn[0][1])
-        # Check all the possible hostnames in turn
-        for host in hosts:
-            host = host.replace('.', '\\.')
-            if host.startswith('*'):
-                host = '.' + host
-            if re.search('^' + host + '$', hostname, re.IGNORECASE):
-                return True
-        return False
-
     def connect(self):
+        def matchHostname(cert, hostname):
+            # Get valid hostnames from the certificate
+            hosts = []
+            if 'subjectAltName' in cert:
+                for rdn in cert['subjectAltName']:
+                    if (rdn[0].lower() == 'dns') or (rdn[0][:2].lower() == 'ip'):
+                        hosts.append(rdn[1])
+            if 'subject' in cert:
+                for rdn in cert['subject']:
+                    if rdn[0][0].lower() == 'commonname':
+                        hosts.append(rdn[0][1])
+            # Check all the possible hostnames in turn
+            for host in hosts:
+                # Escape host for RE usage
+                host = host.replace('.', '\\.')   # Avoid dots matching any character
+                addStar = False
+                if host.startswith('*\\.'):
+                    host = host[3:]               # Handle *.domain.tld later, we first need to escape all * characters but the first one
+                    addStar = True
+                host = host.replace('*', '\\*')   # There should be no other * characters so we force them as litterals
+                if addStar:
+                    host = '(.*\\.)?' + host      # *.domain.tld matches domain.tld, h.domain.tld, h1.h2.domain.tld
+                # Does the hostname match the RE?
+                if re.search('^' + host + '$', hostname, re.IGNORECASE):
+                    return True
+            return False
+
         sock = socket.create_connection((self.host, self.port))
         self.sock = ssl.wrap_socket(sock, keyfile = self.key_file, certfile = self.cert_file, cert_reqs = self.cert_reqs, ca_certs = self.ca_certs)
         if self.cert_reqs == ssl.CERT_REQUIRED:
             cert = self.sock.getpeercert()
             hostname = self.host.split(':', 0)[0]
-            if not self._matchHostname(cert, hostname):
+            if not matchHostname(cert, hostname):
                 raise CertificateError(hostname, 'hostname mismatch.')
 
 
