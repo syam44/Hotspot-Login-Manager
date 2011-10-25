@@ -50,28 +50,32 @@ class ControlSocket(threading.Thread):
             #-----------------------------------------------------------------------------
             if command == 'pid':
                 self.write(os.getpid())
+                raise _ExitFromSocket()
 
 
             #-----------------------------------------------------------------------------
-            elif command == 'reauth':
+            if command == 'reauth':
                 if self.__authenticator.antiDosWaiting():
                     self.write(_('A reauthentication just happened, the daemon will handle your request as soon as possible...'))
                 self.__authenticator.wakeUp.set()
+                raise _ExitFromSocket()
 
 
             #-----------------------------------------------------------------------------
-            elif command == 'status':
+            if command == 'status':
                 # TODO: status
                 self.write('this is the daemon status')
+                raise _ExitFromSocket()
 
 
             #-----------------------------------------------------------------------------
-            elif command == 'notify':
+            if command == 'notify':
                 # TODO: notify
                 import time
                 while True:
                     self.write('[wireless-connected] hello\nthis is a notification')
                     time.sleep(5)
+                raise _ExitFromSocket()
 
 
         #-----------------------------------------------------------------------------
