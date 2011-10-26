@@ -22,7 +22,7 @@ def isAvailable():
     '''
     if isAvailable.__cache == None:
         try:
-            result = subprocess.check_output(['which', 'notify-send']).decode()
+            result = subprocess.check_output(['which', 'notify-send']).decode('utf-8')
             if result.endswith('/notify-send\n'):
                 isAvailable.__cache = True
                 return isAvailable.__cache

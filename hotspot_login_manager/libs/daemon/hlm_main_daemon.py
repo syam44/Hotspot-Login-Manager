@@ -16,10 +16,11 @@
 import atexit
 import os
 import socket
+import sys
 #
 from hotspot_login_manager.libs.core import hlm_daemonize
 from hotspot_login_manager.libs.core import hlm_paths
-from hotspot_login_manager.libs.daemon import hlm_auth
+from hotspot_login_manager.libs.daemon import hlm_authenticator
 from hotspot_login_manager.libs.daemon import hlm_config
 from hotspot_login_manager.libs.daemon import hlm_controlsocket
 
@@ -94,19 +95,19 @@ def main(args):
     # Create the client control socket
     _createControlSocket()
     # Load daemon configuration
-    (user, group) = hlm_config.loadDaemon()
+    configDaemon = hlm_config.loadDaemon()
     # Load credentials configuration
-    credentials = hlm_config.loadCredentials()
+    configRelevantPluginCredentials = hlm_config.loadRelevantPluginCredentials()
 
     # Daemonize the process
     hlm_daemonize.daemonize(
                             umask = 0,
-                            uid = user,
-                            gid = group,
+                            uid = configDaemon.user,
+                            gid = configDaemon.group,
                             keepFiles = [_controlSocket.fileno()],
                            )
 
-    authenticator = hlm_auth.Authenticator(credentials)
+    authenticator = hlm_authenticator.Authenticator(configDaemon, configRelevantPluginCredentials)
 
     _controlSocket.listen(2)
     if __INFO__: logInfo('HLM system daemon is up and running.')

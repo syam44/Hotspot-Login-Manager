@@ -144,7 +144,7 @@ def _parseArgs():
                      help = _('Display the current status of the system daemon and exit.'),
                      dest = 'runStatus', action = 'store_true')
     group.add_option('--providers',
-                     help = _('Display the list of available authentication providers and exit.'),
+                     help = _('Display the list of the supported service providers and exit.'),
                      dest = 'runProviders', action = 'store_true')
     group.add_option('--pid',
                      help = _('Display the current PID of the system daemon and exit.'),

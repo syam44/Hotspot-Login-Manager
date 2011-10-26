@@ -25,9 +25,9 @@ import re
 _registry = {}
 
 #
-# Pre-compiled regular expression.
+# Pre-compiled regular expression for load()
 #
-_moduleNameRegex = re.compile('^[a-zA-Z0-9_]+$')
+_regexModuleName = re.compile('^[a-zA-Z0-9_]+$')
 
 
 #-----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ def load(moduleName, searchPath, applicationDomain):
             pass
 
         # Check module name to guard against directory traversal and other annoyances.
-        if _moduleNameRegex.search(moduleName) == None:
+        if _regexModuleName.search(moduleName) == None:
             ImportError(_('Invalid plugin name {0}.').format(moduleName))
         searchPath = os.path.realpath(searchPath)
 

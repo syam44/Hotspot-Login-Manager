@@ -64,6 +64,53 @@ def urlOpener():
 
 
 #-----------------------------------------------------------------------------
+def readAll(result, encoding = True):
+    ''' Convenience function to read the whole result and optionally decode it at the same time.
+
+        If "encoding" is True, it will automatically detect the encoding according to the Content-Type header.
+        IF "encoding" is None or there is no Content-Type header, return the binary data.
+    '''
+    data = b''
+    while True:
+        response = result.read()
+        if response == b'':
+            break
+        data += response
+    if encoding == True:
+        encoding = None
+        contentType = result.getheader('Content-Type', None)
+        if isinstance(contentType, str):
+            match = _regexContentType.search(contentType)
+            if match != None:
+                encoding = match.group(1)
+    if encoding != None:
+        try:
+            data = data.decode(encoding)
+        except:
+            pass
+    return data
+
+
+#-----------------------------------------------------------------------------
+def splitUrlArguments(url, mandatoryArgs = None, urlLabel = None):
+    ''' Convenience function to split an URL and check its arguments.
+    '''
+    urlArgs = {}
+    for arg in urllib.parse.urlsplit(url).query.split('&'):
+        (key, value) = arg.split('=')
+        (key, value) = (urllib.parse.unquote(key), urllib.parse.unquote(value))
+        urlArgs[key] = value
+    if mandatoryArgs != None:
+        argKeys = urlArgs.keys()
+        if urlLabel == None:
+            urlLabel = 'URL'
+        for arg in mandatoryArgs:
+            if arg not in argKeys:
+                raise Exception('missing argument {0} in the {1}.'.format(quote(arg), urlLabel))
+    return urlArgs
+
+
+#-----------------------------------------------------------------------------
 class _RedirectError(BaseException):
     ''' Custom error that will hold the new location in case of a redirect.
     '''
@@ -178,6 +225,13 @@ class HTTPSHandler(urllib.request.HTTPSHandler):
             raise
 
     https_request = urllib.request.HTTPSHandler.do_request_
+
+
+#-----------------------------------------------------------------------------
+#
+# Pre-compiled regular expression for readAll()
+#
+_regexContentType = re.compile('charset=([^;]+)')
 
 
 #-----------------------------------------------------------------------------

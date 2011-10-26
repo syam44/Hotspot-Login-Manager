@@ -8,35 +8,27 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Authentication plugin: sfr.fr
+# Description: Authentication plugin for SFR.FR hotspots
 #
 
 
 #-----------------------------------------------------------------------------
-from hotspot_login_manager.libs.daemon import hlm_http
+def getSupportedProviders():
+    return ['sfr.fr']
 
 
 #-----------------------------------------------------------------------------
-def authenticate(user, password, redirect, ssids, pluginName):
-    if __DEBUG__: logDebug('Checking AuthPlugin {0}.'.format(quote(pluginName)))
+def getSupportedSSIDs():
+    return ['SFR WiFi Public']
 
-    #
-    # Filter out the URLs we don't handle
-    #
-    if not redirect.startswith('https://hotspot.neuf.fr/indexEncryptingChilli.php?'):
-        if __DEBUG__: logDebug('AuthPlugin {0} did not recognize the redirect URL.'.format(quote(pluginName)))
-        return False
-    if __DEBUG__: logDebug('AuthPlugin {0} may handle the redirect URL.'.format(quote(pluginName)))
 
-    #
-    # TODO: filter out SSIDs?
-    #
+#-----------------------------------------------------------------------------
+def getSupportedRedirectPrefixes():
+    return ['https://hotspot.neuf.fr/indexEncryptingChilli.php?']
 
-    # Get the corresponding page
-    result = hlm_http.urlOpener().open(redirect)
-    result.close()
-    if __DEBUG__: logDebug('AuthPlugin {0} successfully grabbed the login webpage.'.format(quote(pluginName)))
 
+#-----------------------------------------------------------------------------
+def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
     return False
 
 

@@ -42,9 +42,9 @@ _WE_SIOCGIWESSID   = 0x8B1B    # IOCTL: get SSID
 _ioctlSocket = None
 
 #
-# Pre-compiled regular expression
+# Pre-compiled regular expression for getInterfaces()
 #
-_networkInterfacesRegex = re.compile('^ *([a-z]{2,}[0-9]*):')
+_regexNetworkInterfaces = re.compile('^ *([a-z]{2,}[0-9]*):')
 
 
 #-----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ def getInterfaces():
         with open('/proc/net/wireless', 'r') as devices:
             for device in devices:
                 try:
-                    ifaces.append(_networkInterfacesRegex.search(device).group(1))
+                    ifaces.append(_regexNetworkInterfaces.search(device).group(1))
                 except SystemExit:
                     raise
                 except BaseException:
@@ -81,7 +81,7 @@ def getSSID(iface):
         try:
             iwpoint = _IwPoint('\x00' * _WE_ESSID_MAX_SIZE)
             (status, result) = _IW_GetExtension(iface, _WE_SIOCGIWESSID, iwpoint.packed)
-            return iwpoint.result.tostring().decode().strip('\x00')
+            return iwpoint.result.tostring().decode('utf-8').strip('\x00')
         except SystemExit:
             raise
         except BaseException as exc:
@@ -95,7 +95,7 @@ class _IwPoint(object):
     '''
     #-----------------------------------------------------------------------------
     def __init__(self, data, flags = 0):
-        self.result = array.array('B', data.encode())
+        self.result = array.array('B', data.encode('utf-8'))
         (caddr_t, length) = self.result.buffer_info()
         # Format: P pointer to data, H length, H flags
         self.packed = struct.pack('PHH', caddr_t, length, flags)
@@ -105,8 +105,9 @@ class _IwPoint(object):
 def _IW_GetExtension(ifname, ioctlRequest, data = None):
     ''' Read information from ifname.
     '''
+    ifname = ifname.encode('utf-8')
     padding = _WE_IFNAMSIZE - len(ifname)
-    request = array.array('B', (ifname + ('\0' * padding)).encode())
+    request = array.array('B', ifname + (b'\0' * padding))
     # put some additional data behind the interface name
     if data is not None:
         request.extend(data)

@@ -8,26 +8,28 @@
 #
 # Authors: syam (aks92@free.fr)
 #
-# Description: Main program for listing the available providers.
+# Description: Authentication plugin for FREE.FR hotspots
 #
 
 
 #-----------------------------------------------------------------------------
-import sys
-#
-from hotspot_login_manager.libs.daemon import hlm_auth_plugins
+def getSupportedProviders():
+    return ['free.fr']
 
 
 #-----------------------------------------------------------------------------
-def main(args):
-    providers = hlm_auth_plugins.getSupportedProviders()
-    providers.sort()
+def getSupportedSSIDs():
+    return ['FreeWifi']
 
-    print(_('Available service providers:'))
-    for provider in providers:
-        print('    ' + provider)
 
-    sys.exit(0)
+#-----------------------------------------------------------------------------
+def getSupportedRedirectPrefixes():
+    return ['https://wifi.free.fr/?url=']
+
+
+#-----------------------------------------------------------------------------
+def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+    return False
 
 
 #-----------------------------------------------------------------------------

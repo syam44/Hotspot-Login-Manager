@@ -21,25 +21,26 @@ import re
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_paths
-from hotspot_login_manager.libs.core import hlm_plugin
+#
+from hotspot_login_manager.libs.daemon import hlm_auth_plugins
 
 
 #-----------------------------------------------------------------------------
 #
-# The minimum ping delay (in seconds) accepted from the credentials configuration.
+# The minimum ping interval (in seconds) accepted from the credentials configuration.
 #
-_minimumPingDelay = 15
+_minimumPingInterval = 15
 
 
 #-----------------------------------------------------------------------------
 #
-# The bare minimum ping delay (in seconds).
-# This value is used in daemon/hlm_auth to enforce a minimum waiting time between each
+# The bare minimum ping interval (in seconds).
+# This value is used in daemon/hlm_authenticator to enforce a minimum waiting time between each
 # try, so we can protect against reauth spamming (which amounts to DoS).
 #
-# Obviously it must be smaller than _minimumPingDelay above.
+# Obviously it must be smaller than _minimumPingInterval above.
 #
-antiDosPingDelay = 5
+antiDosPingInterval = 5
 
 
 #-----------------------------------------------------------------------------
@@ -62,7 +63,7 @@ def loadDaemon():
         if config.sections() != ['daemon']:
             raise Exception(_('only the section {0} is allowed in this file.').format('[daemon]'))
         options = config.options('daemon')
-        _checkAlienDirectives(['credentials', 'user', 'group'], options, 'daemon')
+        _checkAlienDirectives(['credentials', 'user', 'group', 'ping_site', 'ping_interval'], options, 'daemon')
         # "credentials" accepts a credentials.conf file path
         if args.daemonCredentials == None:
             credentials = None
@@ -79,9 +80,24 @@ def loadDaemon():
         group = None
         if config.has_option('daemon', 'group'):
             group = config.get('daemon', 'group')
+        # "pingSite" requires an http:// website URL
+        pingSite = _mandatoryDirective('ping_site', options, 'daemon', config.get)
+        if not pingSite.startswith('http://'):
+            raise Exception(_('ping_site {0} is is incorrect (must start with {1}), exiting.').format(quote(pingSite), quote('http://')))
+        pingInterval = _mandatoryDirective('ping_interval', options, 'daemon', config.getint)
+        if pingInterval < _minimumPingInterval:
+            if __WARNING__: logWarning(_('Daemon configuration file {0}: ping_interval is way too low ({1} seconds), forcing it to {2} seconds.').format(quote(configFile), pingInterval, _minimumPingInterval))
+            pingInterval = _minimumPingInterval
+
+        # Wrap configuration into a single Values() object
+        configCredentials = Values()
+        configCredentials.user = user
+        configCredentials.group = group
+        configCredentials.pingSite = pingSite
+        configCredentials.pingInterval = pingInterval
 
         if __DEBUG__: logDebug('Daemon configuration has been loaded from {0}.'.format(configFile))
-        return (user, group)
+        return configCredentials
     except SystemExit:
         raise
     except BaseException as exc:
@@ -89,7 +105,7 @@ def loadDaemon():
 
 
 #-----------------------------------------------------------------------------
-def loadCredentials():
+def loadRelevantPluginCredentials():
     ''' Load the credentials configuration file.
     '''
     configFile = hlm_args.args().daemonCredentials
@@ -101,47 +117,48 @@ def loadCredentials():
     except BaseException as exc:
         raise FatalError(_('Can\'t load the credentials configuration file {0}: {1}').format(quote(configFile), exc))
 
-    result = Values()
-    result.ping = None
-    result.auths = []
+    configCredentials = {}
     try:
+        supportedProviders = hlm_auth_plugins.getSupportedProviders()
+
         sections = config.sections()
-        regex = re.compile('^provider = ([a-zA-Z0-9_]+)$')
+        regex = re.compile('^provider = ([a-zA-Z0-9_.]+)$')
         for section in sections:
-            if section == 'ping':
-                options = config.options('ping')
-                _checkAlienDirectives(['site', 'delay'], options, section)
-                result.ping = _mandatoryDirective('site', options, section, config.get)
-                if not result.ping.startswith('http://'):
-                    raise Exception(_('ping website {0} is is incorrect, exiting.').format(quote(result.ping)))
-                result.delay = _mandatoryDirective('delay', options, section, config.getint)
-                if result.delay < _minimumPingDelay:
-                    if __WARNING__: logWarning(_('Credentials configuration file {0}: ping interval {1} is way too low ({2} seconds), forcing it to {3} seconds.').format(quote(configFile), quote('delay'), result.delay, _minimumPingDelay))
-                    result.delay = _minimumPingDelay
-            else:
-                match = regex.search(section)
-                if match == None:
-                    raise Exception(_('section {0} is not allowed in this file.').format('[' + section + ']'))
-                options = config.options(section)
-                _checkAlienDirectives(['user', 'password'], options, section)
-                auth = Values()
-                auth.pluginName = match.group(1).strip()
-                auth.user = _mandatoryDirective('user', options, section, config.get)
-                auth.password = _mandatoryDirective('password', options, section, config.get)
-                try:
-                    auth.pluginModule = hlm_plugin.load('hlma_' + auth.pluginName, hlm_application.getPath() + '/libs/auth', 'auth')
-                    result.auths.append(auth)
-                except SystemExit:
-                    raise
-                except BaseException as exc:
-                    if __WARNING__: logWarning('Invalid authentication provider {0}: {1}'.format(quote(auth.pluginName), exc))
-        if result.ping == None:
-            raise Exception(_('section {0} is missing.').format('[ping]'))
-        if result.auths == []:
+            # Check service provider
+            match = regex.search(section)
+            if match == None:
+                raise Exception(_('section {0} is not allowed in this file.').format('[' + section + ']'))
+            provider = match.group(1)
+            if provider not in supportedProviders:
+                raise Exception(_('service provider {0} is not (currently) supported by HLM.').format(quote(provider)))
+            # Check options
+            options = config.options(section)
+            _checkAlienDirectives(['user', 'password'], options, section)
+            user = _mandatoryDirective('user', options, section, config.get)
+            password = _mandatoryDirective('password', options, section, config.get)
+            configCredentials[provider] = (user, password)
+
+        if configCredentials == {}:
             raise Exception(_('no configured credentials, exiting.'))
 
+        # Check which plugins we may use, according to the provided credentials.
+        availablePlugins = hlm_auth_plugins.getAuthPlugins()
+        relevantPlugins = set()
+
+        for plugin in availablePlugins:
+            plugin.credentials = {}
+            pluginProviders = plugin.getSupportedProviders()
+            for provider in configCredentials:
+                if provider in pluginProviders:
+                    plugin.credentials[provider] = configCredentials[provider]
+                    relevantPlugins.add(plugin)
+
+        relevantPlugins = [plugin for plugin in relevantPlugins]
+        if relevantPlugins == []:
+            raise Exception(_('configured credentials don\'t match any available authentication plugin, exiting.'))
+
         if __DEBUG__: logDebug('Credentials configuration has been loaded from {0}.'.format(configFile))
-        return result
+        return relevantPlugins
     except SystemExit:
         raise
     except BaseException as exc:
