@@ -102,6 +102,7 @@ def main(args):
     # Daemonize the process
     hlm_daemonize.daemonize(
                             umask = 0,
+                            syslogLabel = 'Hotspot Login Manager',
                             uid = configDaemon.user,
                             gid = configDaemon.group,
                             keepFiles = [_controlSocket.fileno()],

@@ -115,9 +115,9 @@ def detachProcess(detach, hookFirstFork):
             raise FatalError(_('Unable to detach the process: {0} ({1})').format(error, exc))
 
     forkAndExit(_('failed first fork.'))
-    os.setsid()
     if hookFirstFork != None:
         hookFirstFork()
+    os.setsid()
     forkAndExit(_('failed second fork.'))
     return True
 

@@ -76,6 +76,10 @@ def daemonize(
               # unprivileged options (any user)
               syslogFacility = True,        # True: setup the syslog facility and activate it.
                                             # False: do not use syslog.
+                                            #
+                                            # Use the syslogLabel parameter below to customize the syslog header.
+              syslogLabel = 'Hotspot Login Manager',
+
               detach = None,                # None : detach the process, except when called from init / inetd
                                             # True: always detach the process
                                             # False: never detach the process
@@ -114,7 +118,7 @@ def daemonize(
 
     # Create log object before we detach from the terminal
     if syslogFacility:
-        hlm_log.open()
+        hlm_log.open(syslogLabel)
 
     # Detach the process
     if detach != False:

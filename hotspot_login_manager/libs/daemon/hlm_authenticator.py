@@ -104,7 +104,7 @@ class Authenticator(threading.Thread):
                             if __DEBUG__: logDebug('AuthPlugin {0} authenticated us successfully.'.format(quote(plugin.pluginName)))
                             break
                         else:
-                            if __DEBUG__: logDebug('AuthPlugin {0} failed to authenticate.'.format(quote(plugin.pluginName)))
+                           raise Exception('failed to authenticate (without explanation).')
 
                     except SystemExit:
                         raise

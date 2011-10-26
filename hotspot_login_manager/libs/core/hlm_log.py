@@ -20,12 +20,12 @@ import syslog
 
 
 #-----------------------------------------------------------------------------
-def open():
+def open(syslogLabel):
     ''' Open the syslog facility.
     '''
     global _logger
     if _logger == None:
-        _logger =  _Logger()
+        _logger =  _Logger(syslogLabel)
 
 
 #-----------------------------------------------------------------------------
@@ -46,9 +46,9 @@ class _Logger(object):
         is enforced by open() / activate() module functions.
     '''
     #-----------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, syslogLabel):
         self.__active = False
-        syslog.openlog('Hotspot Login Manager', (syslog.LOG_PID | syslog.LOG_NDELAY), syslog.LOG_DAEMON)
+        syslog.openlog(syslogLabel, (syslog.LOG_PID | syslog.LOG_NDELAY), syslog.LOG_DAEMON)
         atexit.register(syslog.closelog)
         if __DEBUG__: logDebug('Syslog facility is ready and waiting to be activated.')
 
