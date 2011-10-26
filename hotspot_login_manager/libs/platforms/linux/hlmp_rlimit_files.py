@@ -12,7 +12,7 @@
 #              This is the Linux-specific implementation.
 #
 #              This platform-specific file has no wrapper module.
-#              It is installed directly in core/hlm_daemonize
+#              It is installed directly in daemon/hlm_daemonize
 #
 
 

@@ -4,7 +4,7 @@ In hotspot_login_manager/libs/platforms/linux/hlmp_wireless.py:
         http://pythonwifi.wikispot.org/
     We definitely don't need the full IW API, so depending on this library makes no sense, especially since it is still alpha and not yet packaged in Debian.
 
-In hotspot_login_manager/libs/core/hlm_daemonize_psf.py:
+In hotspot_login_manager/libs/daemon/hlm_daemonize_psf.py:
     Most code in this module has been borrowed from python-daemon 1.5.5 by Ben Finney et al. (which is licensed under the PSF v2).
         http://pypi.python.org/pypi/python-daemon/
         Copyright © 2008–2010 Ben Finney <ben+python@benfinney.id.au>

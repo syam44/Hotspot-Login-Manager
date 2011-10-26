@@ -21,8 +21,8 @@ import sys
 #
 from hotspot_login_manager.libs.core import hlm_args
 from hotspot_login_manager.libs.core import hlm_application
-from hotspot_login_manager.libs.core import hlm_daemonize_psf
-from hotspot_login_manager.libs.core import hlm_log
+from hotspot_login_manager.libs.daemon import hlm_daemonize_psf
+from hotspot_login_manager.libs.daemon import hlm_log
 #
 from hotspot_login_manager.libs.core import hlm_platform
 hlm_platform.install(vars(), 'rlimit_files')

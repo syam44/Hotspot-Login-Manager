@@ -55,7 +55,7 @@ globals()['__builtins__']['_N'] = gettext.ngettext
 #-----------------------------------------------------------------------------
 #
 # Basic logging services.
-# Those functions will be overriden in daemon mode by core/hlm_log.activate()
+# Those functions will be overriden in daemon mode by daemon/hlm_log.activate()
 #
 
 

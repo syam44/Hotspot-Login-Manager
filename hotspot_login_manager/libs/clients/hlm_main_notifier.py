@@ -19,7 +19,6 @@ import re
 import sys
 #
 from hotspot_login_manager.libs.core import hlm_application
-from hotspot_login_manager.libs.core import hlm_daemonize
 from hotspot_login_manager.libs.clients import hlm_notifierbackend
 from hotspot_login_manager.libs.clients import hlm_clientsocket
 
@@ -30,11 +29,6 @@ def main(args):
         sys.exit(1)
 
     clientSocket = hlm_clientsocket.ClientSocket()
-
-    # Daemonize the process
-    hlm_daemonize.daemonize(syslogLabel = 'Hotspot Login Manager (notifications for {0})'.format(quote(getpass.getuser())),
-                            keepFiles = [clientSocket.fileno()],
-                           )
 
     if __INFO__: logInfo('HLM notifier daemon is up and running.')
     try:

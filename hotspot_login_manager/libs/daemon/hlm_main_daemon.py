@@ -18,11 +18,11 @@ import os
 import socket
 import sys
 #
-from hotspot_login_manager.libs.core import hlm_daemonize
 from hotspot_login_manager.libs.core import hlm_paths
 from hotspot_login_manager.libs.daemon import hlm_authenticator
 from hotspot_login_manager.libs.daemon import hlm_config
 from hotspot_login_manager.libs.daemon import hlm_controlsocket
+from hotspot_login_manager.libs.daemon import hlm_daemonize
 
 
 #-----------------------------------------------------------------------------
