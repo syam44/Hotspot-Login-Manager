@@ -27,7 +27,7 @@ def getSupportedProviders():
 
 #-----------------------------------------------------------------------------
 def getSupportedSSIDs():
-    return ['SFR WiFi FON']
+    return ['SFR WiFi FON', 'SFR WiFi Public', 'Neuf WiFi FON', 'Neuf WiFi Public']
 
 
 #-----------------------------------------------------------------------------
@@ -69,10 +69,18 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
     except BaseException as exc:
         reportFailure('error while grabbing the login webpage: {0}'.format(exc))
 
-    # Basic check to see if we are on the right hotspot
-    if (_regexCheckNB4.search(pageData) == None) or (_regexCheckChoiceFON.search(pageData) == None):
-        reportFailure('basic sanity check failed, we don\'t have a FON-enabled "NeufBox4".')
-    if __DEBUG__: logDebug(debugMessage('basic sanity check OK, seems we have a FON-enabled "NeufBox4".'))
+    # Basic check to see if we actually are on a SFR "NeufBox"
+    if _regexCheckNB4.search(pageData) == None:
+        reportFailure('this is not a "NeufBox4".')
+    if __DEBUG__: logDebug(debugMessage('seems we have a "NeufBox".'))
+
+    # Is the hotspot FON-enabled?
+    hasFONsupport = (_regexCheckChoiceFON.search(pageData) != None)
+    if __DEBUG__:
+        if hasFONsupport:
+            logDebug(debugMessage('we have FON support.'))
+        else:
+            logDebug(debugMessage('we don\'t have FON support.'))
 
     # Double-check the Chillispot URL
     match = _regexChilliURL.search(pageData)
@@ -87,7 +95,9 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
         debugMessageHeader = 'AuthPlugin {0} (credentials {1})'.format(quote(pluginName), quote('sfr.fr'))
 
         (user, password) = credentials['sfr.fr']
-        postData = 'choix=neuf&username={0}&password={1}&conditions=on&challenge={2}&accessType=neuf&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'])
+        postData = 'username={0}&password={1}&conditions=on&challenge={2}&accessType=neuf&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'])
+        if hasFONsupport:
+            postData = 'choix=neuf&' + postData
 
         # Ask the hotspot gateway to give us the Chillispot URL
         try:
@@ -125,7 +135,7 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
 
         raise hlm_auth_plugins.Status_Success(pluginName, 'sfr.fr')
 
-    elif 'fon' in credentials.keys():
+    elif hasFONsupport and ('fon' in credentials.keys()):
         # TODO
         reportFailure('FON is not yet supported.')
 
@@ -137,7 +147,7 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
 # Pre-compiled regular expressions for authenticate()
 #
 _regexCheckNB4 = re.compile('<form action="nb4_crypt.php" ')
-_regexCheckChoiceFON = re.compile('<select name="choix" ')
+_regexCheckChoiceFON = re.compile('<select name="choix" id="choix">[^<]+<option value="neuf" selected>SFR</option>[^<]+<option value="fon">Fonero</option>')
 _regexChilliURL = re.compile('SFRLoginURL_JIL=(https://hotspot.neuf.fr/indexEncryptingChilli.php?[^>]+)-->')
 _regexJSRedirect = re.compile('window.location = "([^"]+)";')
 
