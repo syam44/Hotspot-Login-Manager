@@ -58,6 +58,7 @@ def main(args):
                         message = message[len(iconName)+3:]
                 # Send the notification to the end-user
                 hlm_notifierbackend.notify(message, icon)
+
         finally:
             clientSocket.close()
 

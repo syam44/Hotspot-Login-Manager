@@ -14,6 +14,7 @@
 
 #-----------------------------------------------------------------------------
 import subprocess
+import sys
 
 
 #-----------------------------------------------------------------------------
@@ -44,10 +45,14 @@ def notify(message, icon = None):
     ''' Send a desktop notification to the end-user.
     '''
     if isAvailable.__cache:
-        if icon == None:
-            subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
-        else:
-            subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
+        try:
+            if icon == None:
+                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
+            else:
+                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
+        except:
+            logError('notify-send reported an error, exiting.')
+            sys.exit(1)
 
 
 #-----------------------------------------------------------------------------
