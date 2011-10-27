@@ -130,18 +130,21 @@ class Authenticator(threading.Thread):
                         self.status['wasOurJob'] = True
                         self.status['message'] = exc.message
                         self.dispatcher.notify('[ok] ' + exc.message)
+                        if __INFO__: logInfo(exc.message)
                         raise _WaitForNextEvent()
 
                     except hlm_auth_plugins.Status_WrongCredentials as exc:
                         self.status['message'] = exc.message
                         self.dispatcher.notify('[warning] ' + exc.message)
+                        if __WARNING__: logWarning(exc.message)
 
                     except hlm_auth_plugins.Status_Error as exc:
                         if __DEBUG__: logDebug(exc.message)
 
                     except hlm_http.CertificateError as exc:
-                        if __WARNING__: logWarning(exc)
-                        self.dispatcher.notify('[error] ' + _('The hotspot\'s SSL certificate is invalid!\nNo credentials were sent, it may be a phishing hotspot.'))
+                        exc_message = _('The hotspot\'s SSL certificate is invalid!\nNo credentials were sent, it may be a phishing hotspot.')
+                        self.dispatcher.notify('[error] ' + exc_message)
+                        logError(exc_message + ' ' + str(exc))
 
                     except BaseException as exc:
                         raise Exception('AuthPlugin {0}: [UNEXPECTED FAILURE] {1}'.format(quote(plugin.pluginName), exc))
