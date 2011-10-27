@@ -16,6 +16,8 @@
 import os
 import socket
 import threading
+#
+from hotspot_login_manager.libs.daemon import hlm_dispatcher
 
 
 #-----------------------------------------------------------------------------
@@ -63,18 +65,27 @@ class ControlSocket(threading.Thread):
 
             #-----------------------------------------------------------------------------
             if command == 'status':
-                # TODO: status
-                self.write('this is the daemon status')
+                self.write(self.__authenticator.status['message'])
                 raise _ExitFromSocket()
 
 
             #-----------------------------------------------------------------------------
             if command == 'notify':
-                # TODO: notify
-                import time
-                while True:
-                    self.write('[wireless-connected] hello\nthis is a notification')
-                    time.sleep(5)
+                observer = hlm_dispatcher.Observer()
+                self.__authenticator.dispatcher.addObserver(observer)
+                try:
+                    while True:
+                        messages = observer.getMessages(30)
+                        if messages == []:
+                            # Keep-alive message so we can close the daemon's control socket
+                            # if the client closed it unexpectedly.
+                            self.write('.')
+                        else:
+                            # Send all pending messages to the notifications client.
+                            for message in messages:
+                                self.write(message)
+                finally:
+                    self.__authenticator.dispatcher.removeObserver(observer)
                 raise _ExitFromSocket()
 
 

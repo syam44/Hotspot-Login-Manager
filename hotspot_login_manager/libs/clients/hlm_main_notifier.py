@@ -46,6 +46,9 @@ def main(args):
                 message = clientSocket.readMessage()
                 if message == '':
                     break
+                # Keep-alive message, ignore it
+                if message == '.':
+                    continue
                 # Default icon
                 icon = None
                 match = regex.search(message)

@@ -29,7 +29,8 @@ def getSupportedRedirectPrefixes():
 
 #-----------------------------------------------------------------------------
 def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
-    return False
+    # TODO
+    reportFailure('FREE.FR is not yet supported.')
 
 
 #-----------------------------------------------------------------------------

@@ -32,8 +32,8 @@
             redirected URL prefixes are supported by this plugin. Those strings are matched
             against the actual redirectURL using "redirectURL.startswith(supportedPrefix)".
 
-        authenticate(redirectURL, connectedSSIDs, credentials, pluginName): tries to
-            authenticate on the hotspot's Wifi network using "credentials", provided
+        authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+            tries to authenticate on the hotspot's Wifi network using "credentials", provided
             the "redirectURL" and "connectedSSIDs" match the ones supported by this plugin.
 
             "redirectURL" is the URL to which our ping test was redirected to.
@@ -53,6 +53,45 @@ import re
 #
 from hotspot_login_manager.libs.core import hlm_application
 from hotspot_login_manager.libs.core import hlm_plugin
+
+
+#-----------------------------------------------------------------------------
+class _Status(BaseException):
+    ''' Base class for reporting a plugin's status to the authenticator controller.
+    '''
+    def __init__(self, plugin, message):
+        BaseException.__init__(self)
+        self.plugin = plugin
+        self.message = message
+
+
+#-----------------------------------------------------------------------------
+class Status_Error(_Status):
+    ''' An authentification plugin should raise this exception when the captive
+        portal is not recognized.
+        This could be either because the plugin is not supposed to handle that portal,
+        or because the portal's connection protocol has changed.
+    '''
+
+
+#-----------------------------------------------------------------------------
+class Status_WrongCredentials(_Status):
+    ''' An authentification plugin should raise this exception when the captive
+        portal does not accept the credentials.
+    '''
+    def __init__(self, plugin, credentials):
+        message = _('The hotspot rejected your {0} credentials.').format(quote(credentials))
+        Status_Error.__init__(self, plugin, message)
+
+
+#-----------------------------------------------------------------------------
+class Status_Success(_Status):
+    ''' An authentification plugin should raise this exception when it successfully
+        logged in into the captive portal.
+    '''
+    def __init__(self, plugin, credentials):
+        message = _('Successfully connected to the hotspot using your {0} credentials.').format(quote(credentials))
+        _Status.__init__(self, plugin, message)
 
 
 #-----------------------------------------------------------------------------

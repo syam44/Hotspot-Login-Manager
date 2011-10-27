@@ -16,6 +16,7 @@
 import re
 import urllib.parse
 #
+from hotspot_login_manager.libs.daemon import hlm_auth_plugins
 from hotspot_login_manager.libs.daemon import hlm_http
 
 
@@ -36,67 +37,99 @@ def getSupportedRedirectPrefixes():
 
 #-----------------------------------------------------------------------------
 def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+
+    debugMessageHeader = 'AuthPlugin {0}'.format(quote(pluginName))
+    def debugMessage(message, *args):
+        if args != tuple():
+            message = message.format(*args)
+        message = '{0}: {1}'.format(debugMessageHeader, message)
+        return message
+
+
+    def reportFailure(message, *args):
+        message = debugMessage('[FAILURE] ' + message, *args)
+        raise hlm_auth_plugins.Status_Error(pluginName, message)
+
+
     # Extract the URL arguments
-    urlArgs = hlm_http.splitUrlArguments(redirectURL, ['challenge', 'mode', 'uamip', 'uamport', 'channel'], 'redirect URL')
-    if __DEBUG__: logDebug('AuthPlugin {0}: got all required arguments from the redirect URL.'.format(quote(pluginName)))
+    try:
+        urlArgs = hlm_http.splitUrlArguments(redirectURL, ['challenge', 'mode', 'uamip', 'uamport', 'channel'], 'redirect URL')
+        if __DEBUG__: logDebug(debugMessage('got all required arguments from the redirect URL.'))
+    except BaseException as exc:
+        reportFailure(exc)
 
     # Get the login page
-    result = hlm_http.urlOpener().open(redirectURL)
-    pageData = hlm_http.readAll(result)
-    result.close()
-    if __DEBUG__: logDebug('AuthPlugin {0}: grabbed the login webpage.'.format(quote(pluginName)))
+    try:
+        result = hlm_http.urlOpener().open(redirectURL, timeout = 10)
+        pageData = hlm_http.readAll(result)
+        result.close()
+        if __DEBUG__: logDebug(debugMessage('grabbed the login webpage.'))
+    except hlm_http.CertificateError as exc:
+        raise
+    except BaseException as exc:
+        reportFailure('error while grabbing the login webpage: {0}'.format(exc))
 
     # Basic check to see if we are on the right hotspot
     if (_regexCheckNB4.search(pageData) == None) or (_regexCheckChoiceFON.search(pageData) == None):
-        raise Exception('basic sanity check failed, we don\'t have a "NeufBox4".')
-    if __DEBUG__: logDebug('AuthPlugin {0}: basic sanity check OK, seems we have a "NeufBox4" here.'.format(quote(pluginName)))
+        reportFailure('basic sanity check failed, we don\'t have a FON-enabled "NeufBox4".')
+    if __DEBUG__: logDebug(debugMessage('basic sanity check OK, seems we have a FON-enabled "NeufBox4".'))
 
     # Double-check the Chillispot URL
     match = _regexChilliURL.search(pageData)
     if match == None:
-        raise Exception('in-page data is missing.')
+        reportFailure('in-page data is missing.')
     if match.group(1) != redirectURL:
-        raise Exception('in-page data conflicts with the redirected URL.')
-    if __DEBUG__: logDebug('AuthPlugin {0}: in-page data confirms the redirect URL.'.format(quote(pluginName)))
+        reportFailure('in-page data conflicts with the redirected URL.')
+    if __DEBUG__: logDebug(debugMessage('in-page data confirms the redirect URL.'))
 
     # Post data
     if 'sfr.fr' in credentials.keys():
+        debugMessageHeader = 'AuthPlugin {0} (credentials {1})'.format(quote(pluginName), quote('sfr.fr'))
+
         (user, password) = credentials['sfr.fr']
         postData = 'choix=neuf&username={0}&password={1}&conditions=on&challenge={2}&accessType=neuf&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'])
 
         # Ask the hotspot gateway to give us the Chillispot URL
-        result = hlm_http.urlOpener().open('https://hotspot.neuf.fr/nb4_crypt.php', postData)
-        pageData = hlm_http.readAll(result)
-        result.close()
-        if __DEBUG__: logDebug('AuthPlugin {0}: grabbed the encryption gateway (JS redirect) result webpage.'.format(quote(pluginName)))
+        try:
+            result = hlm_http.urlOpener().open('https://hotspot.neuf.fr/nb4_crypt.php', data = postData, timeout = 10)
+            pageData = hlm_http.readAll(result)
+            result.close()
+            if __DEBUG__: logDebug(debugMessage('grabbed the encryption gateway (JS redirect) result webpage.'))
+        except hlm_http.CertificateError as exc:
+            raise
+        except BaseException as exc:
+            reportFailure('error while grabbing the encryption gateway (JS redirect) result webpage: {0}'.format(exc))
 
         # OK, now we have to put up with a Javascript redirect. I mean, WTF?
         match = _regexJSRedirect.search(pageData)
         if match == None:
-            raise Exception('missing URL in the encryption gateway (JS redirect) result webpage.')
+            reportFailure('missing URL in the encryption gateway (JS redirect) result webpage.')
         redirectURL = match.group(1)
         # Let's see what Chillispot will answer us...
         redirectURL = hlm_http.detectRedirect(redirectURL)
         if redirectURL == None:
-            raise Exception('something went wrong during the Chillispot query (redirect expected, but none obtained).')
+            reportFailure('something went wrong during the Chillispot query (redirect expected, but none obtained).')
 
         # Check the final URL arguments
-        urlArgs = hlm_http.splitUrlArguments(redirectURL, ['res'], 'redirect URL')
-        urlArgs = urlArgs['res'].lower()
+        try:
+            urlArgs = hlm_http.splitUrlArguments(redirectURL, ['res'], 'redirect URL')
+            urlArgs = urlArgs['res'].lower()
+        except BaseException as exc:
+            reportFailure(exc)
 
         if urlArgs == 'failed':
-            raise Exception('WRONG CREDENTIALS')
+            raise hlm_auth_plugins.Status_WrongCredentials(pluginName, 'sfr.fr')
 
         if (urlArgs != 'success') and (urlArgs != 'already'):
-            raise Exception('Chillispot didn\'t let us log in, no idea why.')
+            reportFailure('Chillispot didn\'t let us log in, no idea why. Here\'s the redirected URL: {0}'.format(redirectURL))
 
-        return True
+        raise hlm_auth_plugins.Status_Success(pluginName, 'sfr.fr')
 
     elif 'fon' in credentials.keys():
         # TODO
-        return False
+        reportFailure('FON is not yet supported.')
 
-    return False
+    reportFailure('this plugin only supports «sfr.fr» and «fon» credentials.')
 
 
 #-----------------------------------------------------------------------------

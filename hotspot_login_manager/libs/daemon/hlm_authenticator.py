@@ -18,6 +18,7 @@ import time
 #
 from hotspot_login_manager.libs.daemon import hlm_auth_plugins
 from hotspot_login_manager.libs.daemon import hlm_config
+from hotspot_login_manager.libs.daemon import hlm_dispatcher
 from hotspot_login_manager.libs.daemon import hlm_http
 #
 from hotspot_login_manager.libs.core import hlm_platform
@@ -43,6 +44,11 @@ class Authenticator(threading.Thread):
         self.__relevantPlugins = configRelevantPluginCredentials
         self.__antiDosWaiting = True
         self.__sleepInterval = max(self.__configDaemon.pingInterval - hlm_config.antiDosPingInterval, 1)
+        self.dispatcher = hlm_dispatcher.Dispatcher()
+        self.status = { 'connected': None,
+                        'wasOurJob': False,
+                        'message': _('Unknown connection status (a redirect was detected, but no plugin managed to log you in).'),
+                      }
         self.start()
 
 
@@ -58,7 +64,6 @@ class Authenticator(threading.Thread):
     def run(self):
         ''' Main authenticator controller loop.
         '''
-
         while True:
             try:
                 ifaces = getInterfaces()
@@ -68,10 +73,22 @@ class Authenticator(threading.Thread):
                     raise _WaitForNextEvent()
 
                 # Do we already have internet access?
+                if __DEBUG__: logDebug('About to ping {0} in order to check for internet access.'.format(quote(self.__configDaemon.pingSite)))
                 redirectURL = hlm_http.detectRedirect(self.__configDaemon.pingSite)
                 if redirectURL == None:
+                    # Update status
+                    self.status['connected'] = True
+                    if not self.status['wasOurJob']:
+                        self.status['message'] = _('Connected to the internet (not thanks to HLM though).')
+
                     if __DEBUG__: logDebug('Ping URL {0} was not redirected. We have internet access.'.format(quote(self.__configDaemon.pingSite)))
                     raise _WaitForNextEvent()
+
+
+                # We don't know yet if we actually need to authenticate (it could be a standard website redirection)
+                self.status['connected'] = None
+                self.status['wasOurJob'] = False
+                self.status['message'] = _('A redirection was detected, you may be behind a captive portal. Trying to authenticate...')
 
                 if __DEBUG__: logDebug('Ping URL {0} was redirected to {1}. Trying to find a plugin that accepts the redirected URL...'.format(quote(self.__configDaemon.pingSite), quote(redirectURL)))
 
@@ -81,41 +98,57 @@ class Authenticator(threading.Thread):
 
                 # Try each relevant authentication plugin in turn
                 for plugin in self.__relevantPlugins:
-                    try:
-                        # Verify the redirected URL
-                        isSupported = False
-                        supportedRedirects = plugin.getSupportedRedirectPrefixes()
-                        for redirectPrefix in supportedRedirects:
-                            if redirectURL.startswith(redirectPrefix):
-                                isSupported = True
-                                break
-                        if not isSupported:
-                            continue
-                        # Verify the connected SSIDs
-                        isSupported = False
-                        supportedSSIDs = plugin.getSupportedSSIDs()
-                        for ssid in connectedSSIDs:
-                            if ssid in supportedSSIDs:
-                                isSupported = True
-                                break
-                        if not isSupported:
-                            continue
-                        # The plugin matches both the redirectURL and the connected SSIDs, let's try to authenticate!
-                        if __DEBUG__: logDebug('AuthPlugin {0} could match, trying to authenticate...'.format(quote(plugin.pluginName)))
-                        if plugin.authenticate(redirectURL, connectedSSIDs, plugin.credentials, plugin.pluginName):
-                            # If the plugin successfully authenticated us, it must return True so we don't need to try the other plugins
-                            if __DEBUG__: logDebug('AuthPlugin {0} authenticated us successfully.'.format(quote(plugin.pluginName)))
+                    # Verify the redirected URL
+                    isSupported = False
+                    supportedRedirects = plugin.getSupportedRedirectPrefixes()
+                    for redirectPrefix in supportedRedirects:
+                        if redirectURL.startswith(redirectPrefix):
+                            isSupported = True
                             break
-                        else:
-                           raise Exception('failed to authenticate (without explanation).')
+                    if not isSupported:
+                        continue
+                    # Verify the connected SSIDs
+                    isSupported = False
+                    supportedSSIDs = plugin.getSupportedSSIDs()
+                    for ssid in connectedSSIDs:
+                        if ssid in supportedSSIDs:
+                            isSupported = True
+                            break
+                    if not isSupported:
+                        continue
+                    # The plugin matches both the redirectURL and the connected SSIDs, let's try to authenticate!
+                    if __DEBUG__: logDebug('AuthPlugin {0} could match, trying to authenticate...'.format(quote(plugin.pluginName)))
+
+                    try:
+                        plugin.authenticate(redirectURL, connectedSSIDs, plugin.credentials, plugin.pluginName)
 
                     except SystemExit:
                         raise
+
+                    except hlm_auth_plugins.Status_Success as exc:
+                        self.status['connected'] = True
+                        self.status['wasOurJob'] = True
+                        self.status['message'] = exc.message
+                        self.dispatcher.notify('[ok] ' + exc.message)
+                        raise _WaitForNextEvent()
+
+                    except hlm_auth_plugins.Status_WrongCredentials as exc:
+                        self.status['message'] = exc.message
+                        self.dispatcher.notify('[warning] ' + exc.message)
+
+                    except hlm_auth_plugins.Status_Error as exc:
+                        if __DEBUG__: logDebug(exc.message)
+
                     except hlm_http.CertificateError as exc:
                         if __WARNING__: logWarning(exc)
-                    except BaseException as exc:
-                        if __DEBUG__: logDebug('AuthPlugin {0} FAILURE: {1}'.format(quote(plugin.pluginName), exc))
+                        self.dispatcher.notify('[error] ' + _('The hotspot\'s SSL certificate is invalid!\nNo credentials were sent, it may be a phishing hotspot.'))
 
+                    except BaseException as exc:
+                        raise Exception('AuthPlugin {0}: [UNEXPECTED FAILURE] {1}'.format(quote(plugin.pluginName), exc))
+
+                self.status['connected'] = None
+                self.status['wasOurJob'] = False
+                self.status['message'] = _('Unknown connection status (a redirect was detected, but no authentication plugin managed to log you in).')
 
             except _WaitForNextEvent:
                 pass
@@ -125,11 +158,14 @@ class Authenticator(threading.Thread):
                 if __DEBUG__: logDebug('Authenticator.run(): {0}'.format(exc))
 
             # Wait for the next event
+            if __DEBUG__: logDebug('Going to sleep for {0} seconds.'.format(hlm_config.antiDosPingInterval))
             time.sleep(hlm_config.antiDosPingInterval)
+            if __DEBUG__: logDebug('Waiting for the next event.')
             self.__antiDosWaiting = False
             self.wakeUp.wait(self.__sleepInterval)
             self.wakeUp.clear()
             self.__antiDosWaiting = True
+            if __DEBUG__: logDebug('Authenticator thread woke up.')
 
 
 #-----------------------------------------------------------------------------

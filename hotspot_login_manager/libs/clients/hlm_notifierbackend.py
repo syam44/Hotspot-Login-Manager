@@ -47,9 +47,9 @@ def notify(message, icon = None):
     if isAvailable.__cache:
         try:
             if icon == None:
-                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), 'Hotspot Login Manager', message])
+                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(15000), 'Hotspot Login Manager', message])
             else:
-                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(5000), '-i', icon, 'Hotspot Login Manager', message])
+                subprocess.check_output(['notify-send', '-u', 'low', '-t', str(15000), '-i', icon, 'Hotspot Login Manager', message])
         except:
             logError('notify-send reported an error, exiting.')
             sys.exit(1)

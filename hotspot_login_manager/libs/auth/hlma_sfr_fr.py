@@ -29,7 +29,8 @@ def getSupportedRedirectPrefixes():
 
 #-----------------------------------------------------------------------------
 def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
-    return False
+    # TODO
+    reportFailure('Plain SFR.FR (without FON) is not yet supported.')
 
 
 #-----------------------------------------------------------------------------

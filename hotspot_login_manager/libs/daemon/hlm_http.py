@@ -43,7 +43,7 @@ def detectRedirect(url):
         error is out of our reach.
     '''
     try:
-        result = _redirectOpener.open(url)
+        result = _redirectOpener.open(url, timeout = 10)
         result.close()
     except _RedirectError as exc:
         return exc.location
