@@ -19,7 +19,9 @@ import time
 from hotspot_login_manager.libs.daemon import hlm_auth_plugins
 from hotspot_login_manager.libs.daemon import hlm_config
 from hotspot_login_manager.libs.daemon import hlm_http
-from hotspot_login_manager.libs.daemon import hlm_wireless
+#
+from hotspot_login_manager.libs.core import hlm_platform
+hlm_platform.install(vars(), 'wireless')
 
 
 #-----------------------------------------------------------------------------
@@ -59,7 +61,7 @@ class Authenticator(threading.Thread):
 
         while True:
             try:
-                ifaces = hlm_wireless.getInterfaces()
+                ifaces = getInterfaces()
                 if __DEBUG__: logDebug('Checking available wireless interfaces: {0}'.format(str(ifaces)))
                 # We don't need to do anything if there is no wireless interface available.
                 if ifaces == []:
@@ -70,10 +72,11 @@ class Authenticator(threading.Thread):
                 if redirectURL == None:
                     if __DEBUG__: logDebug('Ping URL {0} was not redirected. We have internet access.'.format(quote(self.__configDaemon.pingSite)))
                     raise _WaitForNextEvent()
+
                 if __DEBUG__: logDebug('Ping URL {0} was redirected to {1}. Trying to find a plugin that accepts the redirected URL...'.format(quote(self.__configDaemon.pingSite), quote(redirectURL)))
 
                 # Get currently configured SSIDs so the plugins can rely on it too
-                connectedSSIDs = [hlm_wireless.getSSID(iface) for iface in ifaces]
+                connectedSSIDs = [getSSID(iface) for iface in ifaces]
                 if __DEBUG__: logDebug('Available SSIDs: {0}'.format(connectedSSIDs))
 
                 # Try each relevant authentication plugin in turn

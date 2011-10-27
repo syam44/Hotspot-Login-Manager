@@ -16,6 +16,9 @@
 #                  http://pythonwifi.wikispot.org/
 #              We definitely don't need the full IW API, so depending on this library makes no sense, especially since it is still alpha and not yet packaged in Debian.
 #
+#              This platform-specific file has no wrapper module.
+#              It is installed directly in daemon/hlm_authenticator
+#
 
 
 #-----------------------------------------------------------------------------
