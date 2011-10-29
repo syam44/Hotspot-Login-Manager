@@ -16,23 +16,19 @@
 ''' This module pre-loads all authentication plugins that live in libs/auth
     and checks that they are in the correct format.
 
-    An authentication plugin should provide four functions:
+    An authentication plugin should provide three functions:
 
-        getSupportedProviders(): returns a list of strings that indicates which
-            service providers this plugin supports. It is needed to allow credentials
-            sharing across several different authentication plugins.
-            eg. SSID "SFR WiFi FON" supports both Neuf/SFR and FON credentials,
-            while SSID "FON" only supports FON credentials and SSID "SFR WiFi Public"
-            only supports Neuf/SFR credentials.
-
-        getSupportedSSIDs(): returns a list of strings that indicates which WiFi SSIDs
-            are supported by this plugin.
+        getSupportedProviders(): returns a dictionary of the form { provider: [ssids] }
+            that indicates which service providers this plugin supports, and which SSIDs
+            support this particular service provider.
+            It is needed to allow credentials sharing across several different authentication plugins.
+            See sfr_fr_fon plugin for a full example.
 
         getSupportedRedirectPrefixes(): returns a list of strings that indicates which
             redirected URL prefixes are supported by this plugin. Those strings are matched
             against the actual redirectURL using "redirectURL.startswith(supportedPrefix)".
 
-        authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+        authenticate(redirectURL, connectedSSIDs):
             tries to authenticate on the hotspot's Wifi network using "credentials", provided
             the "redirectURL" and "connectedSSIDs" match the ones supported by this plugin.
 
@@ -41,9 +37,17 @@
             "connectedSSIDs" is just a list of SSID strings to which the computer
                              is currently connected to.
 
-            "credentials" is a dictionary of the form { provider: (user, password) }
+    The following module variables are reserved and should not be used (they will be
+    automatically populated by the plugin loader / config parser):
 
-            "pluginName" is the plugin's name, for e.g. clean debugging output.
+        pluginName: contains the plugin's name, for e.g. clean debugging output.
+
+        pluginCredentials: a dictionary of the form { provider: (user, password) } that
+                           only contains the relevant credentials for this particular plugin.
+                           (added by daemon/hlm_config)
+
+        supportedSSIDs: a list of all the SSIDs supported by the plugin,
+                        computed from the getSupportedProviders() dictionary.
 '''
 
 
@@ -102,29 +106,41 @@ def getAuthPlugins():
         pluginsPath = hlm_application.getPath() + '/libs/auth'
         regex = re.compile('^hlma_([a-zA-Z0-9_]+).py$')
         plugins = []
-        providers = set()
+        allProviders = {}
         for item in os.listdir(pluginsPath):
             if os.path.isfile(pluginsPath + '/' + item):
                 match = regex.search(item)
                 if match != None:
                     try:
                         pluginModule = hlm_plugin.load(item[:-3], pluginsPath, 'auth')
-                        pluginProviders = pluginModule.getSupportedProviders()
-                        providers = providers.union(pluginProviders)
                         pluginModule.pluginName = match.group(1)
+                        # Compute the supported providers, supported SSIDs etc
+                        pluginProviders = pluginModule.getSupportedProviders()
+                        pluginSSIDs = set()
+                        for provider in pluginProviders:
+                            pluginSSIDs = pluginSSIDs.union(pluginProviders[provider])
+                        pluginModule.supportedSSIDs = list(pluginSSIDs)
+                        # Merge the supported plugin providers/SSIDs in the global cache
+                        for provider in pluginProviders:
+                            if pluginProviders[provider] != []:
+                                if provider not in allProviders:
+                                    allProviders[provider] = set()
+                                allProviders[provider] = allProviders[provider].union(pluginProviders[provider])
+                        # Add the plugin
                         plugins.append(pluginModule)
                     except SystemExit:
                         raise
                     except BaseException as exc:
                         if __WARNING__: logWarning(_('Invalid authentication plugin {0}: {1}').format(quote(item), exc))
         # Normalize the providers list
-        providers = [provider for provider in providers]
-        providers.sort()
-        if providers == []:
+        if allProviders == {}:
             raise FatalError(_('No authentication plugin available / no supported service provider, exiting.'))
+        for provider in allProviders:
+            allProviders[provider] = list(allProviders[provider])
+            allProviders[provider].sort()
         # Cache the results
         getAuthPlugins.__cachePlugins = plugins
-        getAuthPlugins.__cacheProviders = providers
+        getAuthPlugins.__cacheProviders = allProviders
 
     return getAuthPlugins.__cachePlugins
 

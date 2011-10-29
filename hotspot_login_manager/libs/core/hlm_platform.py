@@ -66,7 +66,7 @@ def install(wrapperVars, moduleName):
     '''
     moduleObject = hlm_plugin.load('hlmp_' + moduleName, _platformPluginsPath, 'platform')
     moduleVars = vars(moduleObject)
-    for varName in moduleVars.keys():
+    for varName in moduleVars:
         varObject = moduleVars[varName]
         if (not type(varObject) is types.ModuleType) and (not varName.startswith('_')):
             wrapperVars[varName] = varObject

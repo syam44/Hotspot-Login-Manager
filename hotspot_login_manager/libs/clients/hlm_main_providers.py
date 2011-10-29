@@ -21,11 +21,18 @@ from hotspot_login_manager.libs.daemon import hlm_auth_plugins
 #-----------------------------------------------------------------------------
 def main(args):
     providers = hlm_auth_plugins.getSupportedProviders()
-    providers.sort()
+    providerNames = list(providers)
+    providerNames.sort()
+
+    maxProviderNameLength = 0
+    for provider in providerNames:
+        maxProviderNameLength = max(maxProviderNameLength, len(provider))
 
     print(_('Available service providers:'))
-    for provider in providers:
-        print('    ' + provider)
+    for provider in providerNames:
+        padding = ' ' * (maxProviderNameLength - len(provider))
+        ssidsList = ', '.join(providers[provider])
+        print('    ' + _('{0} {1}(corresponding hotspots: {2})').format(provider, padding, ssidsList))
 
     sys.exit(0)
 

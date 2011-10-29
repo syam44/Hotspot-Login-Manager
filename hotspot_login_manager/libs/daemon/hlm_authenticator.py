@@ -109,7 +109,7 @@ class Authenticator(threading.Thread):
                         continue
                     # Verify the connected SSIDs
                     isSupported = False
-                    supportedSSIDs = plugin.getSupportedSSIDs()
+                    supportedSSIDs = plugin.supportedSSIDs
                     for ssid in connectedSSIDs:
                         if ssid in supportedSSIDs:
                             isSupported = True
@@ -120,7 +120,7 @@ class Authenticator(threading.Thread):
                     if __DEBUG__: logDebug('AuthPlugin {0} could match, trying to authenticate...'.format(quote(plugin.pluginName)))
 
                     try:
-                        plugin.authenticate(redirectURL, connectedSSIDs, plugin.credentials, plugin.pluginName)
+                        plugin.authenticate(redirectURL, connectedSSIDs)
 
                     except SystemExit:
                         raise

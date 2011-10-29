@@ -52,7 +52,7 @@ def load(moduleName, searchPath, applicationDomain):
         # Try to find the relevant module. If an exception arises, let the caller handle it.
         moduleObject = imp.load_source(moduleName, searchPath + '/' + moduleName + '.py')
         # Register the plugin locally (we don't want to rely solely on the global modules namespace)
-        if applicationDomain not in _registry.keys():
+        if applicationDomain not in _registry:
             _registry[applicationDomain] = {}
         _registry[applicationDomain][moduleName] = moduleObject
         return moduleObject

@@ -14,12 +14,9 @@
 
 #-----------------------------------------------------------------------------
 def getSupportedProviders():
-    return [] # TODO: 'free.fr'
-
-
-#-----------------------------------------------------------------------------
-def getSupportedSSIDs():
-    return ['FreeWifi']
+    # See daemon/hlm_auth_plugins
+    return { 'free.fr': [], # TODO: ['FreeWifi'],
+           }
 
 
 #-----------------------------------------------------------------------------
@@ -28,7 +25,7 @@ def getSupportedRedirectPrefixes():
 
 
 #-----------------------------------------------------------------------------
-def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+def authenticate(redirectURL, connectedSSIDs):
     # TODO
     reportFailure('FREE.FR is not yet supported.')
 

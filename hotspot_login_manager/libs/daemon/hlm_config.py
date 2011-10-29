@@ -146,14 +146,14 @@ def loadRelevantPluginCredentials():
         relevantPlugins = set()
 
         for plugin in availablePlugins:
-            plugin.credentials = {}
+            plugin.pluginCredentials = {}
             pluginProviders = plugin.getSupportedProviders()
             for provider in configCredentials:
                 if provider in pluginProviders:
-                    plugin.credentials[provider] = configCredentials[provider]
+                    plugin.pluginCredentials[provider] = configCredentials[provider]
                     relevantPlugins.add(plugin)
 
-        relevantPlugins = [plugin for plugin in relevantPlugins]
+        relevantPlugins = list(relevantPlugins)
         if relevantPlugins == []:
             raise Exception(_('configured credentials don\'t match any available authentication plugin, exiting.'))
 

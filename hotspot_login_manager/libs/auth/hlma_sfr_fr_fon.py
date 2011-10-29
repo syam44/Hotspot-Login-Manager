@@ -22,12 +22,10 @@ from hotspot_login_manager.libs.daemon import hlm_http
 
 #-----------------------------------------------------------------------------
 def getSupportedProviders():
-    return ['sfr.fr'] # TODO: fon
-
-
-#-----------------------------------------------------------------------------
-def getSupportedSSIDs():
-    return ['SFR WiFi FON', 'SFR WiFi Public', 'Neuf WiFi FON', 'Neuf WiFi Public']
+    # See daemon/hlm_auth_plugins
+    return { 'sfr.fr': ['SFR WiFi FON', 'SFR WiFi Public', 'Neuf WiFi FON', 'Neuf WiFi Public'],
+             'fon': [], # TODO: ['SFR WiFi FON', 'Neuf WiFi FON'],
+           }
 
 
 #-----------------------------------------------------------------------------
@@ -36,7 +34,7 @@ def getSupportedRedirectPrefixes():
 
 
 #-----------------------------------------------------------------------------
-def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
+def authenticate(redirectURL, connectedSSIDs):
 
     debugMessageHeader = 'AuthPlugin {0}'.format(quote(pluginName))
     def debugMessage(message, *args):
@@ -91,10 +89,10 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
     if __DEBUG__: logDebug(debugMessage('in-page data confirms the redirect URL.'))
 
     # Post data
-    if 'sfr.fr' in credentials.keys():
+    if 'sfr.fr' in pluginCredentials:
         debugMessageHeader = 'AuthPlugin {0} (credentials {1})'.format(quote(pluginName), quote('sfr.fr'))
 
-        (user, password) = credentials['sfr.fr']
+        (user, password) = pluginCredentials['sfr.fr']
         postData = 'username={0}&password={1}&conditions=on&challenge={2}&accessType=neuf&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'])
         if hasFONsupport:
             postData = 'choix=neuf&' + postData
@@ -135,7 +133,7 @@ def authenticate(redirectURL, connectedSSIDs, credentials, pluginName):
 
         raise hlm_auth_plugins.Status_Success(pluginName, 'sfr.fr')
 
-    elif hasFONsupport and ('fon' in credentials.keys()):
+    elif hasFONsupport and ('fon' in pluginCredentials):
         # TODO
         reportFailure('FON is not yet supported.')
 

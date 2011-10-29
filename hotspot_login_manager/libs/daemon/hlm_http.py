@@ -101,11 +101,10 @@ def splitUrlArguments(url, mandatoryArgs = None, urlLabel = None):
         (key, value) = (urllib.parse.unquote(key), urllib.parse.unquote(value))
         urlArgs[key] = value
     if mandatoryArgs != None:
-        argKeys = urlArgs.keys()
         if urlLabel == None:
             urlLabel = 'URL'
         for arg in mandatoryArgs:
-            if arg not in argKeys:
+            if arg not in urlArgs:
                 raise Exception('missing argument {0} in the {1}.'.format(quote(arg), urlLabel))
     return urlArgs
 
