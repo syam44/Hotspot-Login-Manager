@@ -24,7 +24,7 @@ from hotspot_login_manager.libs.daemon import hlm_http
 def getSupportedProviders():
     # See daemon/hlm_auth_plugins
     return { 'sfr.fr': ['SFR WiFi FON', 'SFR WiFi Public', 'Neuf WiFi FON', 'Neuf WiFi Public'],
-             'fon': [], # TODO: ['SFR WiFi FON', 'Neuf WiFi FON'],
+             'fon': ['SFR WiFi FON', 'Neuf WiFi FON'],
            }
 
 
@@ -88,56 +88,62 @@ def authenticate(redirectURL, connectedSSIDs):
         reportFailure('in-page data conflicts with the redirected URL.')
     if __DEBUG__: logDebug(debugMessage('in-page data confirms the redirect URL.'))
 
-    # Post data
+    # Prepare data that is dependent on the kind of hotspot / configured credentials
     if 'sfr.fr' in pluginCredentials:
-        debugMessageHeader = 'AuthPlugin {0} (credentials {1})'.format(quote(pluginName), quote('sfr.fr'))
-
-        (user, password) = pluginCredentials['sfr.fr']
-        postData = 'username={0}&password={1}&conditions=on&challenge={2}&accessType=neuf&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'])
+        hotspotCredentials = 'sfr.fr'
+        hotspotAccessType = 'neuf'
         if hasFONsupport:
-            postData = 'choix=neuf&' + postData
-
-        # Ask the hotspot gateway to give us the Chillispot URL
-        try:
-            result = hlm_http.urlOpener().open('https://hotspot.neuf.fr/nb4_crypt.php', data = postData, timeout = 10)
-            pageData = hlm_http.readAll(result)
-            result.close()
-            if __DEBUG__: logDebug(debugMessage('grabbed the encryption gateway (JS redirect) result webpage.'))
-        except hlm_http.CertificateError as exc:
-            raise
-        except BaseException as exc:
-            reportFailure('error while grabbing the encryption gateway (JS redirect) result webpage: {0}'.format(exc))
-
-        # OK, now we have to put up with a Javascript redirect. I mean, WTF?
-        match = _regexJSRedirect.search(pageData)
-        if match == None:
-            reportFailure('missing URL in the encryption gateway (JS redirect) result webpage.')
-        redirectURL = match.group(1)
-        # Let's see what Chillispot will answer us...
-        redirectURL = hlm_http.detectRedirect(redirectURL)
-        if redirectURL == None:
-            reportFailure('something went wrong during the Chillispot query (redirect expected, but none obtained).')
-
-        # Check the final URL arguments
-        try:
-            urlArgs = hlm_http.splitUrlArguments(redirectURL, ['res'], 'redirect URL')
-            urlArgs = urlArgs['res'].lower()
-        except BaseException as exc:
-            reportFailure(exc)
-
-        if urlArgs == 'failed':
-            raise hlm_auth_plugins.Status_WrongCredentials(pluginName, 'sfr.fr')
-
-        if (urlArgs != 'success') and (urlArgs != 'already'):
-            reportFailure('Chillispot didn\'t let us log in, no idea why. Here\'s the redirected URL: {0}'.format(redirectURL))
-
-        raise hlm_auth_plugins.Status_Success(pluginName, 'sfr.fr')
-
+            hotspotChoice = 'choix=neuf&'
+        else:
+            hotspotChoice = ''
     elif hasFONsupport and ('fon' in pluginCredentials):
-        # TODO
-        reportFailure('FON is not yet supported.')
+        hotspotCredentials = 'fon'
+        hotspotAccessType = 'fon'
+        hotspotChoice = 'choix=fon&'
+    else:
+        reportFailure('this plugin only supports «sfr.fr» and «fon» credentials.')
 
-    reportFailure('this plugin only supports «sfr.fr» and «fon» credentials.')
+    if __DEBUG__: logDebug(debugMessage('using {0} credentials'.format(quote(hotspotCredentials))))
+    debugMessageHeader = 'AuthPlugin {0} (credentials {1})'.format(quote(pluginName), quote(hotspotCredentials))
+
+    (user, password) = pluginCredentials[hotspotCredentials]
+    postData = hotspotChoice + 'username={0}&password={1}&conditions=on&challenge={2}&accessType={7}&lang=fr&mode={3}&userurl=http%253a%252f%252fwww.google.com%252f&uamip={4}&uamport={5}&channel={6}&connexion=Connexion'.format(urllib.parse.quote(user), urllib.parse.quote(password), urlArgs['challenge'], urlArgs['mode'], urlArgs['uamip'], urlArgs['uamport'], urlArgs['channel'], hotspotAccessType)
+
+    # Ask the hotspot gateway to give us the Chillispot URL
+    try:
+        result = hlm_http.urlOpener().open('https://hotspot.neuf.fr/nb4_crypt.php', data = postData, timeout = 10)
+        pageData = hlm_http.readAll(result)
+        result.close()
+        if __DEBUG__: logDebug(debugMessage('grabbed the encryption gateway (JS redirect) result webpage.'))
+    except hlm_http.CertificateError as exc:
+        raise
+    except BaseException as exc:
+        reportFailure('error while grabbing the encryption gateway (JS redirect) result webpage: {0}'.format(exc))
+
+    # OK, now we have to put up with a Javascript redirect. I mean, WTF?
+    match = _regexJSRedirect.search(pageData)
+    if match == None:
+        reportFailure('missing URL in the encryption gateway (JS redirect) result webpage.')
+    redirectURL = match.group(1)
+    # Let's see what Chillispot will answer us...
+    redirectURL = hlm_http.detectRedirect(redirectURL)
+    if redirectURL == None:
+        reportFailure('something went wrong during the Chillispot query (redirect expected, but none obtained).')
+
+    # Check the final URL arguments
+    try:
+        urlArgs = hlm_http.splitUrlArguments(redirectURL, ['res'], 'redirect URL')
+        urlArgs = urlArgs['res'].lower()
+    except BaseException as exc:
+        reportFailure(exc)
+
+    if urlArgs == 'failed':
+        raise hlm_auth_plugins.Status_WrongCredentials(pluginName, hotspotCredentials)
+
+    if (urlArgs != 'success') and (urlArgs != 'already'):
+        reportFailure('Chillispot didn\'t let us log in, no idea why. Here\'s the redirected URL: {0}'.format(redirectURL))
+
+    raise hlm_auth_plugins.Status_Success(pluginName, hotspotCredentials)
 
 
 #-----------------------------------------------------------------------------
