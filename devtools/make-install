@@ -24,6 +24,13 @@ installFile()
         chmod "$RIGHTS" "$FILE"
     fi
 }
+removeFile()
+{
+    local FILE="$1"
+    if [ -e "$FILE" ]; then
+        rm "$FILE" || true
+    fi
+}
 
 case "$1" in
   install)
@@ -40,17 +47,19 @@ case "$1" in
         # FIXME: /etc/init.d/hotspot-login-manager start
         ;;
   remove)
-        /etc/init.d/hotspot-login-manager stop || true
+        if [ -x /etc/init.d/hotspot-login-manager ]; then
+          /etc/init.d/hotspot-login-manager stop || true
+        fi
         update-rc.d hotspot-login-manager remove || true
-        rm "/etc/init.d/hotspot-login-manager" || true
-        rm "/etc/network/if-up.d/hotspot-login-manager" || true
-        rm "/etc/network/if-down.d/hotspot-login-manager" || true
-        rm "/usr/local/bin/hotspot-login-manager" || true
+        removeFile "/etc/init.d/hotspot-login-manager"
+        removeFile "/etc/network/if-up.d/hotspot-login-manager"
+        removeFile "/etc/network/if-down.d/hotspot-login-manager"
+        removeFile "/usr/local/bin/hotspot-login-manager"
         ;;
   purge)
         "$0" remove
-        rm "/etc/hotspot-login-manager/daemon.conf" || true
-        rm "/etc/hotspot-login-manager/credentials.conf" || true
-        rmdir "/etc/hotspot-login-manager" || true
+        removeFile "/etc/hotspot-login-manager/daemon.conf"
+        removeFile "/etc/hotspot-login-manager/credentials.conf"
+        [ -e "/etc/hotspot-login-manager" ] && { rmdir "/etc/hotspot-login-manager" || true; }
         ;;
 esac
