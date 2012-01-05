@@ -1,5 +1,11 @@
 --- pygettext3.1.orig	2011-10-16 14:43:17.000000000 +0200
-+++ pygettext3.1-patched	2011-10-16 15:18:34.388000008 +0200
++++ pygettext3.1-patched	2012-01-05 15:46:23.916000176 +0100
+@@ -1,4 +1,4 @@
+-#! /usr/bin/python3.1
++#! /usr/bin/python3
+ # -*- coding: iso-8859-1 -*-
+ # Originally written by Barry Warsaw <barry@zope.com>
+ #
 @@ -11,6 +11,20 @@
  # can now pass a filename, a module or package name, or a
  # directory (including globbing chars, important for Win32).

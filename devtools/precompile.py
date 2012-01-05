@@ -1,4 +1,4 @@
-#!/usr/bin/python3.1 -OO
+#!/usr/bin/python3 -OO
 # -*- coding:utf-8 -*-
 #
 # hotspot-login-manager
