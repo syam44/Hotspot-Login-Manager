@@ -26,7 +26,7 @@ from hotspot_login_manager.libs.core import hlm_args
 #
 # Debug switch
 #
-_forceDebug = True
+_forceDebug = False
 
 #-----------------------------------------------------------------------------
 def main():
