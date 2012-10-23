@@ -59,7 +59,7 @@ globals()['__builtins__']['_N'] = gettext.ngettext
 #
 
 
-availableLogLevels = ['debug', 'info', 'warning', 'error']
+availableLogLevels = ['info', 'warning', 'error', 'debug']
 defaultLogLevel = 'info'
 
 

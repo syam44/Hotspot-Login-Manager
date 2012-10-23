@@ -10,6 +10,10 @@
 #
 # Description: Authentication plugin for SFR.FR + FON hotspots
 #
+# Thanks a lot to:
+# - jarlax from debian-fr.org who pointed out some Python3.2 bugs
+# - MCMic from debian-fr.org who helped debug the hotspot.wifi.sfr.fr case
+#
 
 
 #-----------------------------------------------------------------------------
@@ -30,7 +34,8 @@ def getSupportedProviders():
 
 #-----------------------------------------------------------------------------
 def getSupportedRedirectPrefixes():
-    return ['https://hotspot.neuf.fr/indexEncryptingChilli.php?']
+    return ['https://hotspot.neuf.fr/indexEncryptingChilli.php?',
+            'https://hotspot.wifi.sfr.fr/indexEncryptingChilli.php?']
 
 
 #-----------------------------------------------------------------------------
@@ -48,6 +53,12 @@ def authenticate(redirectURL, connectedSSIDs):
         message = debugMessage('[FAILURE] ' + message, *args)
         raise hlm_auth_plugins.Status_Error(pluginName, message)
 
+    match = _regexDomainRedirect.search(redirectURL)
+    if match == None:
+        reportFailure('hotspot domain name is missing.')
+    domainRedirect = match.group(1)
+    if __DEBUG__: logDebug(debugMessage('domainRedirect is {0}'.format(domainRedirect)))
+    regexChilliURL = re.compile('SFRLoginURL_JIL=(https://{0}/indexEncryptingChilli.php?[^>]+)-->'.format(re.escape(domainRedirect)))
 
     # Extract the URL arguments
     try:
@@ -60,6 +71,8 @@ def authenticate(redirectURL, connectedSSIDs):
     try:
         result = hlm_http.urlOpener().open(redirectURL, timeout = 10)
         pageData = hlm_http.readAll(result)
+        if not (type(pageData) is str):
+          pageData = str(pageData, 'utf-8')
         result.close()
         if __DEBUG__: logDebug(debugMessage('grabbed the login webpage.'))
     except hlm_http.CertificateError as exc:
@@ -81,7 +94,7 @@ def authenticate(redirectURL, connectedSSIDs):
             logDebug(debugMessage('we don\'t have FON support.'))
 
     # Double-check the Chillispot URL
-    match = _regexChilliURL.search(pageData)
+    match = regexChilliURL.search(pageData)
     if match == None:
         reportFailure('in-page data is missing.')
     if match.group(1) != redirectURL:
@@ -111,8 +124,11 @@ def authenticate(redirectURL, connectedSSIDs):
 
     # Ask the hotspot gateway to give us the Chillispot URL
     try:
-        result = hlm_http.urlOpener().open('https://hotspot.neuf.fr/nb4_crypt.php', data = postData, timeout = 10)
+        # FIXME Python 3.2 (postData)
+        result = hlm_http.urlOpener().open('https://{0}/nb4_crypt.php'.format(domainRedirect), data = postData, timeout = 10)
         pageData = hlm_http.readAll(result)
+        if not (type(pageData) is str):
+          pageData = str(pageData, 'utf-8')
         result.close()
         if __DEBUG__: logDebug(debugMessage('grabbed the encryption gateway (JS redirect) result webpage.'))
     except hlm_http.CertificateError as exc:
@@ -150,9 +166,9 @@ def authenticate(redirectURL, connectedSSIDs):
 #
 # Pre-compiled regular expressions for authenticate()
 #
-_regexCheckNB4 = re.compile('<form action="nb4_crypt.php" ')
+_regexDomainRedirect = re.compile('https://([^/]+)/')
+_regexCheckNB4 = re.compile('<form action="nb4_crypt\\.php" ')
 _regexCheckChoiceFON = re.compile('<select name="choix" id="choix">[^<]+<option value="neuf" selected>SFR</option>[^<]+<option value="fon">Fonero</option>')
-_regexChilliURL = re.compile('SFRLoginURL_JIL=(https://hotspot.neuf.fr/indexEncryptingChilli.php?[^>]+)-->')
 _regexJSRedirect = re.compile('window.location = "([^"]+)";')
 
 

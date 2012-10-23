@@ -178,13 +178,11 @@ def _parseArgs():
     parser.add_option_group(group)
 
     group = OptionGroup(parser, _('Verbosity'))
-    # Remove 'debug' level from the levels available to end-users
-    availableLogLevels = hlm_globals.availableLogLevels[:]
-    availableLogLevels.remove('debug')
+
     group.add_option('--log', metavar = _('LEVEL'),
-                     help = _('Determine the maximum verbosity LEVEL of the informational messages. In decreasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. In both daemon modes, messages are emitted to syslog\'s {2} facility.')
-                            .format(quote(availableLogLevels), quote(hlm_globals.defaultLogLevel), quote('daemon')),
-                     dest = 'logLevel', choices = availableLogLevels)
+                     help = _('Determine the maximum verbosity LEVEL of the informational messages. In increasing verbosity order, the possible levels are: {0}. If this option is omitted, a default level of {1} will be used. In both daemon modes, messages are emitted to syslog\'s {2} facility.')
+                            .format(quote(hlm_globals.availableLogLevels), quote(hlm_globals.defaultLogLevel), quote('daemon')),
+                     dest = 'logLevel', choices = hlm_globals.availableLogLevels)
     parser.add_option_group(group)
 
     (options, strayArgs) = parser.parse_args()

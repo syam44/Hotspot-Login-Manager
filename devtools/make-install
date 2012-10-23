@@ -46,7 +46,7 @@ case "$1" in
         # FIXME: update-rc.d hotspot-login-manager defaults
         # FIXME: /etc/init.d/hotspot-login-manager start
         ;;
-  remove)
+  uninstall)
         if [ -x /etc/init.d/hotspot-login-manager ]; then
           /etc/init.d/hotspot-login-manager stop || true
         fi
